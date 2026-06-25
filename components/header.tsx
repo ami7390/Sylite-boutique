@@ -7,7 +7,7 @@ import Link from 'next/link'; // Importation de Link pour de meilleures performa
 import { usePathname } from 'next/navigation'; // Hook pour récupérer l'URL actuelle
 
 // IMPORTATION : On écoute les données de notre panier global
-import { useCart } from '../app/context/cartcontext';
+import { useCart } from '../app/(boutique)/context/cartcontext';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
