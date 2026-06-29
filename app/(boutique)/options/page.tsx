@@ -1,145 +1,256 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import Image from "next/image"; 
-import { Suspense, useState } from "react";
+import { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+// Importation du catalogue dynamique partagé
+import { allProducts } from '../../data/products';
 
-// Données fictives de l'article (à remplacer plus tard par tes vraies données de l'API)
-const productData = {
-  name: "Robe de Soie 'Élise'",
-  price: "450 €",
-  images: [
-    { src: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600", alt: "Vue de face" },
-    { src: "https://images.unsplash.com/photo-1568310323330-9b4b0e8b23f2?q=80&w=600", alt: "Détail du dos" },
-    { src: "https://images.unsplash.com/photo-1572804013307-e4c1945a6c11?q=80&w=600", alt: "Vue d'ensemble" },
-  ],
-};
+// 1. Correction de l'interface pour inclure les options facultatives de votre catalogue
+interface Product {
+  id: number;
+  name: string;
+  price: number | string;
+  category: string;
+  tag?: string;
+  badge?: string;
+  image: string;
+  inStock: boolean;
+  colors?: string[];
+  sizes?: string[];
+}
 
-// 1. LE CONTENU DE TA PAGE (Toute la logique visuelle et les états)
 function OptionsContent() {
   const searchParams = useSearchParams();
-  const productIdFromUrl = searchParams.get("product") || "Général";
+  const productIdFromUrl = searchParams.get("id");
 
-  const [selectedSize, setSelectedSize] = useState("M");
-  const [selectedColor, setSelectedColor] = useState("Noir");
-  
-  // État pour savoir quelle image afficher en grand (0 = première image)
-  const [mainImageIndex, setMainImageIndex] = useState(0);
+  // Récupération dynamique et normalisation de l'article ciblé
+  const product = useMemo(() => {
+    if (!productIdFromUrl) return null;
+    const found = allProducts.find(p => p.id === Number(productIdFromUrl)) as Product | undefined;
+    if (!found) return null;
+
+    const formattedPrice = typeof found.price === 'string' 
+      ? found.price 
+      : `${Number(found.price || 0).toLocaleString('fr-FR')} FCFA`;
+
+    return {
+      ...found,
+      displayPrice: formattedPrice,
+      colors: found.colors || ["Standard", "Noir", "Ivoire", "Rose Poudré"],
+      sizes: found.sizes || ["XS", "S", "M", "L", "XL"]
+    };
+  }, [productIdFromUrl]);
+
+  // États locaux pour les choix de l'utilisateur
+  const [selectedColor, setSelectedColor] = useState<string>("Standard");
+  const [selectedSize, setSelectedSize] = useState<string>("M");
+
+  // 2. CORRECTION : Remplacement de useMemo par useEffect pour mettre à jour les choix par défaut
+  useEffect(() => {
+    if (product) {
+      if (product.colors && product.colors.length > 0) setSelectedColor(product.colors[0]);
+      if (product.sizes && product.sizes.length > 0) setSelectedSize(product.sizes[0]);
+    }
+  }, [product]);
+
+  // Fonction utilitaire pour uniformiser le texte des catégories
+  const cleanCategoryName = (cat: string): string => {
+    if (!cat) return "";
+    const trimmed = cat.trim();
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  };
+
+  // Extraction automatique des produits de la même catégorie
+  const similarProducts = useMemo(() => {
+    if (!product) return [];
+    const currentCategory = cleanCategoryName(product.category || "");
+    
+    return allProducts
+      .filter(p => cleanCategoryName(p.category || "") === currentCategory && p.id !== product.id)
+      .map(p => ({
+        ...p,
+        displayPrice: typeof p.price === 'string' ? p.price : `${Number(p.price || 0).toLocaleString('fr-FR')} FCFA`
+      }));
+  }, [product]);
+
+  // Redirection personnalisée vers WhatsApp
+  const handleWhatsAppOrder = () => {
+    if (!product) return;
+    const WHATSAPP_NUMBER = "22394939380";
+    
+    const message = `Bonjour SYLITE, je souhaite commander l'article suivant avec ces options :
+    
+- *Produit :* ${product.name}
+- *Prix :* ${product.displayPrice}
+- *Couleur sélectionnée :* ${selectedColor}
+- *Taille sélectionnée :* ${selectedSize}
+
+L'article est-il bien disponible pour une livraison ?`;
+
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  if (!product) {
+    return (
+      <div className="bg-white min-h-screen flex flex-col items-center justify-center p-6 text-xs antialiased">
+        <div className="text-center max-w-sm space-y-4 border border-neutral-100 p-8 rounded-2xl">
+          <div className="text-2xl">🛍️</div>
+          <h2 className="font-bold text-neutral-800 uppercase tracking-wider">Aucun modèle sélectionné</h2>
+          <p className="text-neutral-500 font-light">Retournez sur le catalogue de votre boutique pour configurer vos options.</p>
+          <a href="/" className="inline-block px-5 py-2.5 bg-neutral-950 text-white font-semibold rounded-xl hover:bg-purple-600 transition-colors">
+            Retour à l'accueil
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white text-neutral-900 min-h-screen py-16 px-6 antialiased">
-      {/* Structure en double colonne : Images à gauche, Options à droite */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+    <div className="bg-white text-neutral-900 min-h-screen py-16 px-4 sm:px-6 lg:px-8 antialiased text-xs">
+      <div className="max-w-6xl mx-auto space-y-16">
         
-        {/* --- COLONNE DE GAUCHE : GALERIE D'IMAGES --- */}
-        <div className="space-y-6">
-          {/* Grande image principale */}
-          <div className="relative aspect-[3/4] w-full overflow-hidden border border-neutral-100">
-            <Image
-              src={productData.images[mainImageIndex].src}
-              alt={productData.images[mainImageIndex].alt}
-              fill
-              className="object-cover transition-transform duration-300 hover:scale-105"
-              sizes="(max-w-lg) 100vw, 50vw"
-              priority
-            />
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           
-          {/* Liste des petites vignettes cliquables */}
-          <div className="grid grid-cols-4 gap-4">
-            {productData.images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setMainImageIndex(index)}
-                className={`relative aspect-[3/4] overflow-hidden border ${
-                  mainImageIndex === index ? "border-neutral-900" : "border-neutral-100 hover:border-neutral-300"
-                }`}
-              >
-                <Image 
-                  src={image.src} 
-                  alt={`Vignette ${index + 1}`} 
-                  fill 
-                  className="object-cover" 
-                  sizes="10vw" 
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* --- COLONNE DE DROITE : DÉTAILS ET CONFIGURATION --- */}
-        <div className="space-y-12">
-          {/* En-tête de l'article */}
-          <header className="border-b border-neutral-100 pb-8">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 block mb-2">
-              Référence : {productIdFromUrl}
-            </span>
-            <h1 className="text-4xl font-serif tracking-wide text-neutral-900">
-              {productData.name}
-            </h1>
-            <p className="text-lg text-neutral-700 mt-2 font-medium">
-              {productData.price}
-            </p>
-          </header>
-
-          {/* Formulaire des choix de personnalisation */}
-          <main className="space-y-12">
-            
-            {/* Choix 1 : La Couleur */}
-            <section className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-800">1. Teinte du tissu</h3>
-              <div className="flex gap-3">
-                {["Noir", "Ivoire", "Taupe"].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-5 py-2.5 text-xs tracking-wider transition-all duration-300 border ${
-                      selectedColor === color 
-                        ? "border-neutral-950 bg-neutral-950 text-white font-medium" 
-                        : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* Choix 2 : La Taille */}
-            <section className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-800">2. Guide des tailles</h3>
-              <div className="flex gap-3">
-                {["XS", "S", "M", "L", "XL"].map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`w-12 h-12 text-xs transition-all duration-300 border flex items-center justify-center ${
-                      selectedSize === size 
-                        ? "border-neutral-950 bg-neutral-950 text-white font-medium" 
-                        : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* Actions de validation */}
-            <div className="pt-8 border-t border-neutral-100">
-              <button className="w-full sm:w-auto px-8 py-4 bg-neutral-950 text-white text-xs font-semibold tracking-widest uppercase hover:bg-neutral-800 transition-all duration-300">
-                Confirmer les options — {selectedColor} / {selectedSize}
-              </button>
+          {/* COLONNE DE GAUCHE : IMAGE */}
+          <div className="space-y-4">
+            <div className="relative aspect-[3/4] w-full overflow-hidden border border-neutral-100 bg-neutral-50 rounded-2xl">
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="object-cover transition-transform duration-500 hover:scale-102"
+                sizes="(max-w-lg) 100vw, 50vw"
+                priority
+              />
+              {!product.inStock && (
+                <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[1px] flex items-center justify-center">
+                  <span className="bg-neutral-900/90 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-lg border border-neutral-800">Épuisé</span>
+                </div>
+              )}
             </div>
-          </main>
+          </div>
+
+          {/* COLONNE DE DROITE : CONFIGURATION */}
+          <div className="space-y-8 lg:py-2">
+            <header className="border-b border-neutral-100 pb-6 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md inline-block">
+                {cleanCategoryName(product.category)}
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-serif tracking-wide text-neutral-900 font-medium">
+                {product.name}
+              </h1>
+              <p className="text-base sm:text-lg text-neutral-900 font-bold pt-1">
+                {product.displayPrice}
+              </p>
+            </header>
+
+            <main className="space-y-8">
+              {/* Choix 1 : La Couleur */}
+              <section className="space-y-3">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">1. Teinte disponible en stock</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-4 py-2 text-xs transition-all duration-200 border rounded-xl font-semibold ${
+                        selectedColor === color 
+                          ? "border-neutral-950 bg-neutral-950 text-white shadow-sm" 
+                          : "border-neutral-200 text-neutral-600 bg-white hover:border-neutral-400"
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Choix 2 : La Taille */}
+              <section className="space-y-3">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">2. Guide des tailles</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`w-11 h-11 transition-all duration-200 border flex items-center justify-center rounded-xl font-bold ${
+                        selectedSize === size 
+                          ? "border-neutral-950 bg-neutral-950 text-white shadow-sm" 
+                          : "border-neutral-200 text-neutral-600 bg-white hover:border-neutral-400"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Action : Redirection WhatsApp */}
+              <div className="pt-6 border-t border-neutral-100 space-y-3">
+                <button 
+                  onClick={handleWhatsAppOrder}
+                  className="w-full inline-flex justify-center items-center gap-2 px-6 py-4 bg-emerald-600 text-white text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-emerald-500 transition-all shadow-sm shadow-emerald-600/10"
+                >
+                  <span>🛍️</span> Commander via WhatsApp
+                </button>
+                <p className="text-[10px] text-center text-neutral-400 font-light">
+                  Votre sélection (*{selectedColor}* en taille *{selectedSize}*) sera partagée automatiquement dans la discussion.
+                </p>
+              </div>
+            </main>
+          </div>
+
         </div>
+
+        {/* SECTION RECOMMANDATIONS */}
+        <section className="border-t border-neutral-100 pt-12 space-y-6">
+          <div className="space-y-0.5">
+            <h2 className="text-base font-serif font-bold text-neutral-900">
+              Dans l'univers {cleanCategoryName(product.category)}
+            </h2>
+            <p className="text-neutral-400 font-light">Explorez les autres créations et déclinaisons de cette collection</p>
+          </div>
+
+          {similarProducts.length === 0 ? (
+            <p className="text-neutral-400 italic font-light py-2">Aucun autre modèle n'est disponible dans cette section pour le moment.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+              {similarProducts.map((simProduct) => (
+                <a 
+                  key={simProduct.id} 
+                  href={`/options?id=${simProduct.id}`}
+                  className="bg-white p-2.5 rounded-2xl border border-neutral-200/40 shadow-sm hover:shadow-md hover:border-purple-100 transition-all flex flex-col group"
+                >
+                  <div className="relative aspect-square rounded-xl bg-neutral-50 overflow-hidden mb-3">
+                    <Image 
+                      src={simProduct.image} 
+                      alt={simProduct.name} 
+                      fill 
+                      className="group-hover:scale-102 transition-transform duration-300 object-cover" 
+                    />
+                  </div>
+                  <div className="flex-grow flex flex-col justify-between space-y-1">
+                    <h4 className="font-semibold text-neutral-800 line-clamp-1 group-hover:text-purple-700 transition-colors">
+                      {simProduct.name}
+                    </h4>
+                    <div className="flex items-center justify-between pt-1 border-t border-neutral-50">
+                      <span className="font-bold text-neutral-900">{simProduct.displayPrice}</span>
+                      <span className="text-[10px] font-medium text-purple-600 group-hover:translate-x-0.5 transition-transform">Voir ›</span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
 
       </div>
     </div>
   );
 }
 
-// 2. L'ENVELOPPE DE SÉCURITÉ (Ce qui valide ton build sur Vercel sans crash)
 export default function Options() {
   return (
     <Suspense 

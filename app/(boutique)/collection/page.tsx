@@ -48,14 +48,22 @@ export default function CollectionPage() {
   // CATALOGUE LOGIQUE CENTRALISÉ ET NORMALISÉ
   // =========================================================================
   
-  // Génération dynamique des catégories uniques présentes dans le fichier de données
+  // Fonction utilitaire pour uniformiser le texte des catégories et éviter les doublons
+  const cleanCategoryName = (cat: string): string => {
+    if (!cat) return "";
+    const trimmed = cat.trim();
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  };
+
+  // Génération dynamique des catégories uniques propres et fusionnées
   const categories = useMemo(() => {
-    const uniqueCategories = new Set(allProducts.map(p => p.category));
-    return ["Tous", ...Array.from(uniqueCategories)];
+    const uniqueCategories = new Set(
+      allProducts.map(p => cleanCategoryName(p.category || ""))
+    );
+    return ["Tous", ...Array.from(uniqueCategories).filter(Boolean)];
   }, []);
 
-  // Normalisation des prix à la volée pour sécuriser les tris numériques et le filtre budget
- // Normalisation des prix à la volée pour sécuriser les tris numériques et le filtre budget
+  // Normalisation des prix à la volée et uniformisation des catégories pour le filtrage
   const normalizedCatalog = useMemo<NormalizedProduct[]>(() => {
     return allProducts.map((p: any) => {
       const numericPrice = typeof p.price === 'string' 
@@ -70,7 +78,7 @@ export default function CollectionPage() {
         ...p,
         id: p.id,
         name: p.name || '',
-        category: p.category || '',
+        category: cleanCategoryName(p.category || ''), // Catégorie nettoyée appliquée au produit
         image: p.image || '',
         cleanPrice: numericPrice,
         displayPrice: formattedPrice,
@@ -79,7 +87,7 @@ export default function CollectionPage() {
         inStock: p.inStock !== undefined ? p.inStock : true
       };
     });
-  }, []); // <--- Le fameux ]; qui manquait et faisait tout planter !
+  }, []);
 
   // Sélection automatique des 4 premiers articles du catalogue global pour les recommandations
   const premiumRecommendations = useMemo(() => {
@@ -90,7 +98,7 @@ export default function CollectionPage() {
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...normalizedCatalog];
 
-    // 1. Filtrage par catégorie
+    // 1. Filtrage par catégorie unique et nettoyée
     if (selectedCategory !== "Tous") {
       result = result.filter(p => p.category === selectedCategory);
     }
