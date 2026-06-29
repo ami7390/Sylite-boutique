@@ -286,7 +286,7 @@ export default function NouveauArrivage() {
       price: "4.000 FCFA", 
       category: "gaine", 
       badge: "Belle-Forme", 
-      image: "/gaine-2-4000.jpg",
+      image: "/gaine-2-4000.png",
       isNew: true
     },
      { 
@@ -304,7 +304,7 @@ export default function NouveauArrivage() {
       price: "15.000 FCFA", 
       category: "gaine", 
       badge: "Belle-forme", 
-      image: "/gaine-body 15000.jpg",
+      image: "/gaine-body-15000.jpg",
       isNew: true
     },
      { 
@@ -313,7 +313,7 @@ export default function NouveauArrivage() {
       price: "15.000 FCFA", 
       category: "gaine", 
       badge: "Belle-forme", 
-      image: "/gaine-body.jpg",
+      image: "/gaine-body2.jpg",
       isNew: true
     },
      { 
@@ -403,7 +403,7 @@ export default function NouveauArrivage() {
       price: "12.500 FCFA", 
       category: "gaine", 
       badge: "Belle-forme", 
-      image: "/gaine-court-1.jpg",
+      image: "/gaine-culotte 1.jpg",
       isNew: true
     },
     { 
@@ -430,7 +430,7 @@ export default function NouveauArrivage() {
       price: "15.000 FCFA", 
       category: "gaine", 
       badge: "Belle-forme", 
-      image: "/gaine-long.jpg",
+      image: "/gaine-longue.jpg",
       isNew: true
     },
     { 
@@ -501,8 +501,440 @@ export default function NouveauArrivage() {
       name: "Gaine Culotte Galbante-Ventre Plat sans trace ", 
       price: "6.000 FCFA", 
       category: "nuisette", 
-      badge: "Belle-forme", 
-      image: "/gaine-sculptante-silhouette.jpg",
+      badge: "Incontournable", 
+      image: "/deux-piece.jpg",
+      isNew: true
+    },
+   { 
+      id: 137, 
+      name: "Nuisette Cotton Confort ", 
+      price: "6.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/deux-piece.jpg",
+      isNew: true
+    },
+    { 
+      id: 138, 
+      name: "Ensemble Sous-Vêtement ", 
+      price: "5.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/ensemble sous-vetement.jpg",
+      isNew: true
+    },
+    { 
+      id: 139, 
+      name: "Ensemble Sous-Vêtement Bi-couleure", 
+      price: "7.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/ensemble-body.jpg",
+      isNew: true
+    },
+    { 
+      id: 140, 
+      name: "Nuisette fleurie ", 
+      price: "6.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/nuisette.jpg",
+      isNew: true
+    },
+     { 
+      id: 141, 
+      name: "Nuisette Fleurie-Bleue  ", 
+      price: "6.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/nuisette0.jpg",
+      isNew: true
+    },
+     { 
+      id: 142, 
+      name: "Nuisette Velure Rouge ", 
+      price: "7.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/nuisette-1.jpg",
+      isNew: true
+    },
+    { 
+      id: 143, 
+      name: "Nuisette Velure Noir ", 
+      price: "7.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/nuisette-2.jpg",
+      isNew: true
+    },
+    { 
+      id: 144, 
+      name: "Nuisette Fleurie Beige ", 
+      price: "6.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/nuisette3.jpg",
+      isNew: true
+    },
+    { 
+      id: 145, 
+      name: "Nuisette Velure Noir Simple ", 
+      price: "7.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/nuisette-3.jpg",
+      isNew: true
+    },
+    { 
+      id: 146, 
+      name: "Nuisette Velure 3-Couleure ", 
+      price: "7.000 FCFA", 
+      category: "nuisette", 
+      badge: "Incontournable", 
+      image: "/nuisette-4.jpg",
+      isNew: true
+    },
+     { 
+      id: 146, 
+      name: "Jupe plissée fleurie ", 
+      price: "4.000 FCFA", 
+      category: "jupe", 
+      badge: "Agreable", 
+      image: "/Jupe-4000.jpg",
+      isNew: true
+    },
+     { 
+      id: 147, 
+      name: "Jupe Longue ", 
+      price: "4.000 FCFA", 
+      category: "jupe", 
+      badge: "Agreable", 
+      image: "/Jupe-longue.jpg",
+      isNew: true
+    },
+     { 
+      id: 148, 
+      name: "Robe ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/ensemble 7500.jpg",
+      isNew: true
+    },
+     { 
+      id: 149, 
+      name: "Robe 2 pièce ", 
+      price: "20.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-2-piece.jpg",
+      isNew: true
+    },
+    { 
+      id: 150, 
+      name: "Robe Manche Longue ", 
+      price: "12.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-12500.jpg",
+      isNew: true
+    },
+    { 
+      id: 151, 
+      name: "Robe 2 pièce Avec Ceinture ", 
+      price: "6.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-2-piece-6000.jpg",
+      isNew: true
+    },
+    { 
+      id: 152, 
+      name: "Robe plissée ", 
+      price: "10.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-chic.jpg",
+      isNew: true
+    },
+    { 
+      id: 153, 
+      name: "Robe Bi-Color ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-ensemble.jpg",
+      isNew: true
+    },
+    { 
+      id: 154, 
+      name: "Robe Evasée ", 
+      price: "13.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-kashka.jpg",
+      isNew: true
+    },
+    { 
+      id: 155, 
+      name: "Robe-Large ", 
+      price: "8.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-large.png",
+      isNew: true
+    },
+    { 
+      id: 156, 
+      name: "Robe Longue", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-longue.jpg",
+      isNew: true
+    },
+    { 
+      id: 157, 
+      name: "Robe Simple ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-simple.jpg",
+      isNew: true
+    },
+    { 
+      id: 158, 
+      name: "Robe De Prière ", 
+      price: "6.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-de-prière.jpg",
+      isNew: true
+    },
+    { 
+      id: 159, 
+      name: "Robe Courte ", 
+      price: "6.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-3000.jpg",
+      isNew: true
+    },
+    { 
+      id: 160, 
+      name: "Robe Rouge Perlée ", 
+      price: "7.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-7000.jpg",
+      isNew: true
+    },
+    { 
+      id: 161, 
+      name: "Robe Chic De Soirée ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-7500.png",
+      isNew: true
+    },
+     { 
+      id: 162, 
+      name: "Robe Chic  ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/ensemble-bleu.png",
+      isNew: true
+    },
+     { 
+      id: 163, 
+      name: "Robe Violette ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-violet.png",
+      isNew: true
+    },
+     { 
+      id: 164, 
+      name: "Robe V De Soirée ", 
+      price: "10.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-v.png",
+      isNew: true
+    },
+     { 
+      id: 165, 
+      name: "Robe Manche Longue ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-manche-longue.png",
+      isNew: true
+    },
+     { 
+      id: 166, 
+      name: "Robe Rose Double Manches ", 
+      price: "10.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-rose.png",
+      isNew: true
+    },
+    { 
+      id: 167, 
+      name: "Robe Brodée ", 
+      price: "10.000 FCFA", 
+      category: "ensemble", 
+      badge: "Ensemble-Chic", 
+      image: "/robe-brodé.png",
+      isNew: true
+    },
+    { 
+      id: 168, 
+      name: "Ensemble Jupe ", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "Style", 
+      image: "/2-pieces-7500.jpg",
+      isNew: true
+    },
+    { 
+      id: 169, 
+      name: "Ensemble Pantalon ", 
+      price: "10.000 FCFA", 
+      category: "ensemble", 
+      badge: "style", 
+      image: "/ensemble-patalon.jpg",
+      isNew: true
+    },
+     { 
+      id: 170, 
+      name: "Ensemble Pantalon ", 
+      price: "6.000 FCFA", 
+      category: "ensemble", 
+      badge: "style", 
+      image: "/ensemble-pantalon.jpg",
+      isNew: true
+    },
+     { 
+      id: 171, 
+      name: "Ensemble Patalon  fleuri", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "style", 
+      image: "/ensemble-p-.jpg",
+      isNew: true
+    },
+     { 
+      id: 172, 
+      name: "Ensemble Patalon Rose", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "style", 
+      image: "/ensemble-patalon-7500.jpg",
+      isNew: true
+    },
+     { 
+      id: 173, 
+      name: "Ensemble Jupe", 
+      price: "7.500 FCFA", 
+      category: "ensemble", 
+      badge: "style", 
+      image: "/jupe-complet-6000.jpg",
+      isNew: true
+    },
+     { 
+      id: 174, 
+      name: "BodyAccel", 
+      price: "5.000 FCFA", 
+      category: "soin et meditation", 
+      badge: "soin", 
+      image: "/bodyaccuel.jpg",
+      isNew: true
+    },
+     { 
+      id: 175, 
+      name: "Gel Orange Elemine toutes taches du corps", 
+      price: "5.000 FCFA", 
+      category: "soin et meditation", 
+      badge: "soin", 
+      image: "/gel.jpg",
+      isNew: true
+    },
+     { 
+      id: 176, 
+      name: "Seoul 1980", 
+      price: "5.000 FCFA", 
+      category: "soin et meditation", 
+      badge: "soin", 
+      image: "/seoul.jpg",
+      isNew: true
+    },
+     { 
+      id: 177, 
+      name: "Masseur", 
+      price: "7.500 FCFA", 
+      category: "soin et meditation", 
+      badge: "soin", 
+      image: "/masseur-7500.jpg",
+      isNew: true
+    },
+     { 
+      id: 178, 
+      name: "Slim Patch un produit minceur Ventre Plat", 
+      price: "5.000 FCFA", 
+      category: "soin et meditation", 
+      badge: "soin", 
+      image: "/slim-3.jpg",
+      isNew: true
+    },
+   { 
+      id: 179, 
+      name: "Gourde  Pliable en silicone", 
+      price: "5.000 FCFA", 
+      category: "soin et meditation", 
+      badge: "soin", 
+      image: "/gourde.jpg",
+      isNew: true
+    },
+     { 
+      id: 180, 
+      name: "Crop-Top", 
+      price: "1.500 FCFA", 
+      category: "body", 
+      badge: "Décontractée", 
+      image: "/body-1500.jpg",
+      isNew: true
+    },
+     { 
+      id: 181, 
+      name: "Crop-Top en cotton", 
+      price: "1.500 FCFA", 
+      category: "body", 
+      badge: "Décontractée", 
+      image: "/bodys-1500.jpg",
+      isNew: true
+    },
+     { 
+      id: 182, 
+      name: "Crop-Top Dos nu", 
+      price: "1.500 FCFA", 
+      category: "body", 
+      badge: "Décontractée", 
+      image: "/crop-tops-1500.jpg",
+      isNew: true
+    },
+    { 
+      id: 183, 
+      name: "Crop-Top à bretelles fine", 
+      price: "1.500 FCFA", 
+      category: "body", 
+      badge: "Décontractée", 
+      image: "/crop-top-1500.jpg",
       isNew: true
     },
     {
