@@ -35,7 +35,7 @@ export default function Home() {
     { 
       id: 1, 
       name: "Ensemble Femme Chic et Tendance", 
-      price: "75.000 FCFA", 
+      price: "10.000 FCFA", 
       category: "Ensemble", 
       tag: "Tendance", 
       image: "/ensemble-fleuri.jpg"
@@ -43,7 +43,7 @@ export default function Home() {
     { 
       id: 2, 
       name: "Nuisette en 100% cotton", 
-      price: "45.000 FCFA", 
+      price: "7.500 FCFA", 
       category: "Nuisette", 
       tag: "Incontournable", 
       image: "/nusette.jpg"

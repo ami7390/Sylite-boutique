@@ -68,8 +68,7 @@ export default function NouveauArrivage() {
     { 
       id: 53, 
       name: "Diffuseur d'Huiles Essentielles Mini", 
-      price: "7.500 FCFA", 
-      category: "Bien-être", 
+       category: "Bien-être", 
       badge: "Discret", 
       image: "/humidificateur-7500.jpg",
       isNew: true
@@ -170,7 +169,7 @@ export default function NouveauArrivage() {
       price: "12.000 FCFA", 
       category: "Voiles", 
       badge: "Prestige", 
-      image: "/khimar-complet-12000S.jpg",
+      image: "/khimar-complet.jpg",
       isNew: true
     },
     { 
@@ -225,6 +224,60 @@ export default function NouveauArrivage() {
       category: "Soin et méditation", 
       badge: "Thérapie", 
       image: "/bain-electrique.jpg",
+      isNew: true
+    },
+     { 
+      id: 106, 
+      name: "Collant Court ", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "confornt", 
+      image: "/collant-court.jpg",
+      isNew: true
+    },
+     { 
+      id: 107, 
+      name: "Collant Court ", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "confort", 
+      image: "/collant-court1.jpg",
+      isNew: true
+    },
+     { 
+      id: 108, 
+      name: "Collant Court ", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "confort", 
+      image: "/collant-court3.jpg",
+      isNew: true
+    },
+     { 
+      id: 109, 
+      name: "Collant Court ", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "confort", 
+      image: "/collant-court6.jpg",
+      isNew: true
+    },
+     { 
+      id: 110, 
+      name: "Collant Court ", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "confort", 
+      image: "/ensemble-colant.jpg",
+      isNew: true
+    },
+     { 
+      id: 111, 
+      name: "Collant Court ", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "confort", 
+      image: "/ensemble-colant1.jpg",
       isNew: true
     },
     {
