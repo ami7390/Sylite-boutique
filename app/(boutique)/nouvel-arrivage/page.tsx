@@ -79,7 +79,7 @@ export default function NouveauArrivage() {
       price: "20.000 FCFA", 
       category: "Bien-être", 
       badge: "Luxe", 
-      image: "/diffuseur-premium.jpg",
+      image: "/diffuseur-8000.jpg",
       isNew: true
     },
     { 
@@ -278,6 +278,87 @@ export default function NouveauArrivage() {
       category: "collant", 
       badge: "confort", 
       image: "/ensemble-colant1.jpg",
+      isNew: true
+    },
+     { 
+      id: 112, 
+      name: "Culotte Gainante-Ventre Plat ", 
+      price: "4.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-Forme", 
+      image: "/gaine-2-4000.jpg",
+      isNew: true
+    },
+     { 
+      id: 113, 
+      name: "Corset Gainant ", 
+      price: "5.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-abdo.png",
+      isNew: true
+    },
+    { 
+      id: 114, 
+      name: "Gaine Body ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-body 15000.jpg",
+      isNew: true
+    },
+     { 
+      id: 115, 
+      name: "Gaine Body ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-body.jpg",
+      isNew: true
+    },
+     { 
+      id: 116, 
+      name: "Gaine galbant Scuptante-Forme ", 
+      price: "12.500 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/chifoni.jpg",
+      isNew: true
+    },
+    { 
+      id: 117, 
+      name: "Gaine galbant Scuptante-Forme Transparente ", 
+      price: "12.500 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-transparent.png",
+      isNew: true
+    },
+    { 
+      id: 118, 
+      name: "Corset Beige ", 
+      price: "7.500 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-ceinture.png",
+      isNew: true
+    },
+    { 
+      id: 119, 
+      name: "Culotte Gainante", 
+      price: "5.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-4000.jpg",
+      isNew: true
+    },
+    { 
+      id: 120, 
+      name: "Culotte Gainante ", 
+      price: "5.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-court-2.jpg",
       isNew: true
     },
     {
