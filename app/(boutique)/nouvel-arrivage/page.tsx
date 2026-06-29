@@ -361,6 +361,150 @@ export default function NouveauArrivage() {
       image: "/gaine-court-2.jpg",
       isNew: true
     },
+    { 
+      id: 121, 
+      name: "Culotte Gainante Remontant Fessier  ", 
+      price: "5.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-court-6.jpg",
+      isNew: true
+    },
+    { 
+      id: 122, 
+      name: "Culotte Gainante Remontant Fessier", 
+      price: "5.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-court-7.jpg",
+      isNew: true
+    },
+    { 
+      id: 123, 
+      name: "Culotte Gainante Galbant ", 
+      price: "12.500 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-court-8.jpg",
+      isNew: true
+    },
+    { 
+      id: 124, 
+      name: "Culotte Gainante scuptante-Ventre Plat ", 
+      price: "5.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-court-9.jpg",
+      isNew: true
+    },
+    { 
+      id: 125, 
+      name: "Culotte Gainante Galtante-Ventre Plat ", 
+      price: "12.500 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-court-1.jpg",
+      isNew: true
+    },
+    { 
+      id: 126, 
+      name: "Culotte Gainante Galtante Scuptante ", 
+      price: "12.500 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-culotte.jpg",
+      isNew: true
+    },
+    { 
+      id: 127, 
+      name: "Culotte Gainante Ventre Plat Scuptant Fessier ", 
+      price: "5.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-culotte-bege.jpg",
+      isNew: true
+    },
+    { 
+      id: 128, 
+      name: "Gaine Ceinture ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-long.jpg",
+      isNew: true
+    },
+    { 
+      id: 129, 
+      name: "Gaine Ceinture ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-long-0.jpg",
+      isNew: true
+    },
+    { 
+      id: 130, 
+      name: "Gaine Ceinture ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-long1.jpg",
+      isNew: true
+    },
+    { 
+      id: 131, 
+      name: "Gaine Ceinture ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-long2.jpg",
+      isNew: true
+    },
+    { 
+      id: 132, 
+      name: "Gaine Ceinture-Ventre Plat ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-long3.jpg",
+      isNew: true
+    },
+     { 
+      id: 133, 
+      name: "Gaine Ceinture-Ventre Plat ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-long-5.jpg",
+      isNew: true
+    },
+     { 
+      id: 134, 
+      name: "Gaine Culotte Galbante-Ventre Plat sans trace ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-sculptante.jpg",
+      isNew: true
+    },
+     { 
+      id: 135, 
+      name: "Gaine Culotte Galbante-Ventre Plat sans trace ", 
+      price: "15.000 FCFA", 
+      category: "gaine", 
+      badge: "Belle-forme", 
+      image: "/gaine-sculptante-silhouette.jpg",
+      isNew: true
+    },
+     { 
+      id: 136, 
+      name: "Gaine Culotte Galbante-Ventre Plat sans trace ", 
+      price: "6.000 FCFA", 
+      category: "nuisette", 
+      badge: "Belle-forme", 
+      image: "/gaine-sculptante-silhouette.jpg",
+      isNew: true
+    },
     {
       id: 11,
       name: "Robot Domestique Intuitif & Électroménager Connecté",
