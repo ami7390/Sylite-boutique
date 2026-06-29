@@ -2,18 +2,25 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
+// Importation du catalogue dynamique partagé
+import { allProducts } from '../../data/products';
 
 // Interface produit standardisée
 interface Product {
   id: number;
   name: string;
-  price: number;
-  formattedPrice: string;
+  price: number | string; // Supporte le format numérique ou textuel (ex: "75.000 FCFA")
+  formattedPrice?: string;
   category: string;
   tag?: string;
   badge?: string;
   image: string;
   inStock: boolean;
+}
+
+interface NormalizedProduct extends Product {
+  cleanPrice: number;
+  displayPrice: string;
 }
 
 export default function CollectionPage() {
@@ -28,7 +35,7 @@ export default function CollectionPage() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
   const [visibleCount, setVisibleCount] = useState<number>(8);
 
-  // État pour la nouvelle section interactive (Favoris / Recommandations)
+  // État pour la section interactive des favoris
   const [likedProducts, setLikedProducts] = useState<number[]>([]);
 
   const toggleLike = (id: number) => {
@@ -38,41 +45,81 @@ export default function CollectionPage() {
   };
 
   // =========================================================================
-  // CATALOGUE LOGIQUE CENTRALISÉ
+  // CATALOGUE LOGIQUE CENTRALISÉ ET NORMALISÉ
   // =========================================================================
-  const fullCatalog: Product[] = [
-    { id: 1, name: "Ensemble Femme Chic et Tendance", price: 75000, formattedPrice: "75.000 FCFA", category: "Ensembles", tag: "Tendance", image: "/ensemble-fleuri.jpg", inStock: true },
-    { id: 2, name: "Nuisette en 100% cotton", price: 45000, formattedPrice: "45.000 FCFA", category: "Lingerie", tag: "Incontournable", image: "/nusette.jpg", inStock: true },
-    { id: 3, name: "Gaine Amincissante Ventre Plat Invisible", price: 7000, formattedPrice: "7.000 FCFA", category: "Gaines", tag: "Populaire", image: "/gaine-ceinture-7000.jpg", inStock: true },
-    { id: 4, name: "Body String Échancré Dos Nu Noir", price: 2000, formattedPrice: "2.000 FCFA", category: "Lingerie", tag: "Nouveau", image: "/body 2000.jpg", inStock: true },
-    { id: 5, name: "Diffuseur d'Huiles Essentielles Ultrasonique", price: 22500, formattedPrice: "22.500 FCFA", category: "Bien-être", badge: "Soin", image: "/diffuseur.png", inStock: true },
-    { id: 6, name: "Accessoire de Tête - Epingle", price: 1000, formattedPrice: "1.000 FCFA", category: "Accessoires", badge: "Exclusif", image: "/boite-epingles-pour-hijab.jpg", inStock: true },
-    { id: 7, name: "Foulard en Soie Imprimé Satiné Luxe", price: 2000, formattedPrice: "2.000 FCFA", category: "Accessoires", badge: "Must-Have", image: "/foulard habiba.jpg", inStock: false },
-    { id: 8, name: "Voile en Mousseline Premium Haute Qualité", price: 2000, formattedPrice: "2.000 FCFA", category: "Accessoires", badge: "Nouveau", image: "/muslim 2000.jpg", inStock: true },
-    { id: 9, name: "Collant Opaque Extensible Noir Confort", price: 6000, formattedPrice: "6.000 FCFA", category: "Gaines", badge: "Essentiel", image: "/collant.png", inStock: true },
-    { id: 10, name: "Kit Soin et Méditation - bain de pieds", price: 10000, formattedPrice: "10.000 FCFA", category: "Bien-être", badge: "Zen", image: "/bain-de-pied-10000.jpg", inStock: true },
-  ];
-
-  const categories = ["Tous", "Ensembles", "Lingerie", "Gaines", "Bien-être", "Accessoires"];
-
-  // Sélection fixe de 4 produits phares pour la section "Recommandations" (Ventes privées / Tendances)
-  const premiumRecommendations = useMemo(() => {
-    return fullCatalog.filter(p => p.id === 1 || p.id === 3 || p.id === 5 || p.id === 9);
+  
+  // Génération dynamique des catégories uniques présentes dans le fichier de données
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set(allProducts.map(p => p.category));
+    return ["Tous", ...Array.from(uniqueCategories)];
   }, []);
 
-  // Moteur de filtrage et de tri
+  // Normalisation des prix à la volée pour sécuriser les tris numériques et le filtre budget
+ // Normalisation des prix à la volée pour sécuriser les tris numériques et le filtre budget
+  const normalizedCatalog = useMemo<NormalizedProduct[]>(() => {
+    return allProducts.map((p: any) => {
+      const numericPrice = typeof p.price === 'string' 
+        ? parseInt(p.price.replace(/[^0-9]/g, ''), 10) 
+        : (typeof p.price === 'number' ? p.price : 0);
+
+      const formattedPrice = typeof p.price === 'string' 
+        ? p.price 
+        : `${Number(p.price || 0).toLocaleString('fr-FR')} FCFA`;
+
+      return {
+        ...p,
+        id: p.id,
+        name: p.name || '',
+        category: p.category || '',
+        image: p.image || '',
+        cleanPrice: numericPrice,
+        displayPrice: formattedPrice,
+        tag: p.tag || '',
+        badge: p.badge || '',
+        inStock: p.inStock !== undefined ? p.inStock : true
+      };
+    });
+  }, []); // <--- Le fameux ]; qui manquait et faisait tout planter !
+
+  // Sélection automatique des 4 premiers articles du catalogue global pour les recommandations
+  const premiumRecommendations = useMemo(() => {
+    return normalizedCatalog.slice(0, 4);
+  }, [normalizedCatalog]);
+
+  // Moteur de filtrage et de tri appliqué sur le catalogue global dynamique
   const filteredAndSortedProducts = useMemo(() => {
-    let result = [...fullCatalog];
-    if (selectedCategory !== "Tous") result = result.filter(p => p.category === selectedCategory);
-    if (priceFilter === "under-5000") result = result.filter(p => p.price < 5000);
-    else if (priceFilter === "5000-25000") result = result.filter(p => p.price >= 5000 && p.price <= 25000);
-    else if (priceFilter === "over-25000") result = result.filter(p => p.price > 25000);
-    if (stockFilter) result = result.filter(p => p.inStock);
-    if (sortBy === "price-asc") result.sort((a, b) => a.price - b.price);
-    else if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
-    else if (sortBy === "name-asc") result.sort((a, b) => a.name.localeCompare(b.name));
+    let result = [...normalizedCatalog];
+
+    // 1. Filtrage par catégorie
+    if (selectedCategory !== "Tous") {
+      result = result.filter(p => p.category === selectedCategory);
+    }
+
+    // 2. Filtrage par tranche de budget
+    if (priceFilter === "under-5000") {
+      result = result.filter(p => p.cleanPrice < 5000);
+    } else if (priceFilter === "5000-25000") {
+      result = result.filter(p => p.cleanPrice >= 5000 && p.cleanPrice <= 25000);
+    } else if (priceFilter === "over-25000") {
+      result = result.filter(p => p.cleanPrice > 25000);
+    }
+
+    // 3. Filtrage par stock
+    if (stockFilter) {
+      result = result.filter(p => p.inStock);
+    }
+
+    // 4. Tri des données
+    if (sortBy === "price-asc") {
+      result.sort((a, b) => a.cleanPrice - b.cleanPrice);
+    } else if (sortBy === "price-desc") {
+      result.sort((a, b) => b.cleanPrice - a.cleanPrice);
+    } else if (sortBy === "name-asc") {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
     return result;
-  }, [selectedCategory, priceFilter, stockFilter, sortBy]);
+  }, [normalizedCatalog, selectedCategory, priceFilter, stockFilter, sortBy]);
 
   return (
     <div className="bg-neutral-50/60 min-h-screen selection:bg-purple-500 selection:text-white">
@@ -83,10 +130,8 @@ export default function CollectionPage() {
           <Image 
             src="/shopping-removebg-preview.png" 
             alt="Fond collection permanente textile, lingerie et bien-être"
-            layout="fill"
-            objectFit="cover"
-            objectPosition="center"
-            className="opacity-25 filter brightness-75 contrast-125 select-none pointer-events-none transform scale-105"
+            fill
+            className="opacity-25 filter brightness-75 contrast-125 select-none pointer-events-none transform scale-105 object-cover object-center"
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/80 via-neutral-900/60 to-neutral-950/90" />
@@ -110,7 +155,7 @@ export default function CollectionPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between text-xs">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setIsMobileFilterOpen(true)}
+              onClick={() => Math.max(0, 1) && setIsMobileFilterOpen(true)}
               className="lg:hidden flex items-center gap-2 font-bold text-neutral-800 border border-neutral-200 px-3 py-1.5 rounded-lg active:bg-neutral-50"
             >
               <span>🎛️</span> Filtrer et Trier
@@ -228,7 +273,7 @@ export default function CollectionPage() {
                 {filteredAndSortedProducts.slice(0, visibleCount).map((product) => (
                   <div key={product.id} className="bg-white rounded-2xl overflow-hidden border border-neutral-200/40 shadow-sm hover:shadow-md hover:border-purple-100 transition-all duration-300 group flex flex-col relative">
                     
-                    {/* Bouton Like Interactif (Standard E-commerce) */}
+                    {/* Bouton Like Interactif */}
                     <button 
                       onClick={() => toggleLike(product.id)}
                       className="absolute top-2.5 right-2.5 z-20 bg-white/80 backdrop-blur-sm p-1.5 rounded-full shadow-sm hover:bg-white transition-all text-xs"
@@ -242,7 +287,7 @@ export default function CollectionPage() {
                       </div>
                     )}
                     <div className="relative aspect-[4/5] bg-neutral-100 overflow-hidden">
-                      <Image src={product.image} alt={product.name} layout="fill" objectFit="cover" className="group-hover:scale-102 transition-transform duration-500" />
+                      <Image src={product.image} alt={product.name} fill className="group-hover:scale-102 transition-transform duration-500 object-cover" />
                       {(product.tag || product.badge) && (
                         <span className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-10 uppercase tracking-wide">{product.tag || product.badge}</span>
                       )}
@@ -253,7 +298,7 @@ export default function CollectionPage() {
                         <h2 className="font-semibold text-neutral-800 line-clamp-2 mb-1 sm:mb-2 group-hover:text-purple-700 transition-colors text-xs sm:text-sm">{product.name}</h2>
                       </div>
                       <div className="mt-2 sm:mt-4 pt-2 sm:pt-3 border-t border-neutral-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="text-sm sm:text-base font-bold text-neutral-900">{product.formattedPrice}</div>
+                        <div className="text-sm sm:text-base font-bold text-neutral-900">{product.displayPrice}</div>
                         <a href={`/options?id=${product.id}`} className="inline-flex justify-center items-center px-3 py-1.5 text-[10px] sm:text-xs font-semibold rounded-lg bg-neutral-950 text-white hover:bg-purple-600 transition-all shadow-sm z-10 relative">Options</a>
                       </div>
                     </div>
@@ -292,11 +337,15 @@ export default function CollectionPage() {
           </div>
           <div className="lg:col-span-7 grid grid-cols-2 gap-4">
             <div className="bg-neutral-800/50 p-4 rounded-2xl border border-neutral-800 flex items-center gap-4">
-              <div className="relative w-16 h-20 rounded-lg overflow-hidden flex-shrink-0"><Image src="/ensemble-fleuri.jpg" alt="Ensemble Chic" layout="fill" objectFit="cover" /></div>
+              <div className="relative w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                <Image src="/ensemble-fleuri.jpg" alt="Ensemble Chic" fill className="object-cover" />
+              </div>
               <div className="text-xs"><h4 className="font-semibold text-neutral-200 line-clamp-1">Ensemble Femme Chic</h4><p className="text-neutral-400 mt-0.5">75.000 FCFA</p></div>
             </div>
             <div className="bg-neutral-800/50 p-4 rounded-2xl border border-neutral-800 flex items-center gap-4">
-              <div className="relative w-16 h-20 rounded-lg overflow-hidden flex-shrink-0"><Image src="/foulard habiba.jpg" alt="Foulard Soie" layout="fill" objectFit="cover" /></div>
+              <div className="relative w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                <Image src="/foulard habiba.jpg" alt="Foulard Soie" fill className="object-cover" />
+              </div>
               <div className="text-xs"><h4 className="font-semibold text-neutral-200 line-clamp-1">Foulard en Soie Imprimé</h4><p className="text-emerald-400 font-medium mt-0.5">2.000 FCFA</p></div>
             </div>
           </div>
@@ -314,7 +363,7 @@ export default function CollectionPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {["/ensemble-fleuri.jpg", "/nusette.jpg", "/gaine-ceinture-7000.jpg", "/body 2000.jpg"].map((src, i) => (
             <div key={i} className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-100 group border border-neutral-200/40">
-              <Image src={src} alt="Avis cliente photo communauté" layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform duration-500 filter brightness-95" />
+              <Image src={src} alt="Avis cliente photo communauté" fill className="group-hover:scale-105 transition-transform duration-500 filter brightness-95 object-cover" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold">
                 ✨ @Sylite_Customer_{i+1}
               </div>
@@ -323,7 +372,7 @@ export default function CollectionPage() {
         </div>
       </section>
 
-      {/* ================= NOUVELLE SELECTION ULTIME : RECOMMANDATIONS INTELLIGENTES ET CAROUSEL (CROSS-SELLING) ================= */}
+      {/* ================= SELECTION RECOMMANDATIONS DYNAMIQUES DU DRESSING ================= */}
       <section className="bg-purple-50/40 border-y border-purple-100/60 py-16 my-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 text-center sm:text-left gap-2">
@@ -334,7 +383,6 @@ export default function CollectionPage() {
             <p className="text-xs text-neutral-400 font-light max-w-xs">Les articles les plus consultés et réservés cette semaine à Bamako.</p>
           </div>
 
-          {/* Grille horizontale/carrousel responsive pour les pièces tendances */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {premiumRecommendations.map((product) => (
               <div key={product.id} className="bg-white rounded-2xl p-2.5 border border-neutral-200/40 shadow-sm hover:shadow-md transition-all flex flex-col justify-between text-xs relative group">
@@ -347,14 +395,14 @@ export default function CollectionPage() {
                 
                 <div>
                   <div className="relative aspect-square rounded-xl bg-neutral-50 overflow-hidden mb-3">
-                    <Image src={product.image} alt={product.name} layout="fill" objectFit="cover" className="group-hover:scale-102 transition-transform duration-300" />
+                    <Image src={product.image} alt={product.name} fill className="group-hover:scale-102 transition-transform duration-300 object-cover" />
                   </div>
                   <span className="text-[9px] text-purple-600 font-bold uppercase tracking-wider block mb-0.5">{product.category}</span>
                   <h4 className="font-semibold text-neutral-800 line-clamp-1 group-hover:text-purple-700 transition-colors mb-1">{product.name}</h4>
                 </div>
 
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
-                  <span className="font-bold text-neutral-900">{product.formattedPrice}</span>
+                  <span className="font-bold text-neutral-900">{product.displayPrice}</span>
                   <span className="text-[10px] font-medium text-neutral-400 group-hover:text-neutral-600 transition-colors">Voir ›</span>
                 </div>
               </div>
@@ -363,7 +411,7 @@ export default function CollectionPage() {
         </div>
       </section>
 
-      {/* ================= MODULE DE CONFIANCE ET LOGISTIQUE LOGIQUE ================= */}
+      {/* ================= MODULE DE CONFIANCE ET LOGISTIQUE ================= */}
       <section className="bg-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-xs text-center md:text-left">
           <div className="space-y-2 p-2">
