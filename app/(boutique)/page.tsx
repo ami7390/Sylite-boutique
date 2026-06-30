@@ -164,12 +164,13 @@ export default function Home() {
           <div className="hidden lg:block h-[500px]"></div>
         </div>
         
-        <div className="absolute bottom-0 right-0 z-10 hidden lg:block w-[45%] h-full max-h-[100%] overflow-hidden">
+        {/* CHANGEMENT ICI : w-[50%] pour élargir le conteneur, et objectFit="cover" pour remplir l'espace */}
+        <div className="absolute bottom-0 right-0 z-10 hidden lg:block w-[50%] h-full max-h-[100%] overflow-hidden">
           <Image 
-            src="/shopping-removebg-preview.png"
+            src="/ouverture.png"
             alt="Boutique de mode en ligne et articles de bien-être pour femme"
             layout="fill"
-            objectFit="contain"
+            objectFit="cover"
             objectPosition="bottom right"
             priority
           />
@@ -535,35 +536,8 @@ export default function Home() {
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center max-w-xl mx-auto mb-12">
           <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest block mb-2">Des Réponses Claires</span>
-          <h2 className="text-2xl font-serif font-bold text-neutral-900">Questions Fréquentes — Aide</h2>
-          <p className="text-xs text-neutral-500 font-light mt-1">Tout ce que vous devez savoir avant de valider votre commande WhatsApp.</p>
-        </div>
-
-        <div className="space-y-3">
-          {faqItems.map((item, index) => (
-            <div key={index} className="bg-white border border-neutral-200/70 rounded-2xl overflow-hidden transition-all duration-200">
-              <button 
-                onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                className="w-full text-left p-5 font-medium text-neutral-800 text-sm sm:text-base flex justify-between items-center hover:bg-neutral-50/50 transition-colors"
-              >
-                <span>{item.q}</span>
-                <span className={`text-purple-600 transition-transform duration-200 text-lg ${openFaq === index ? "rotate-45" : ""}`}>
-                  ＋
-                </span>
-              </button>
-              
-              <div 
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${openFaq === index ? "max-h-40 border-t border-neutral-100" : "max-h-0"}`}
-              >
-                <p className="p-5 text-xs sm:text-sm text-neutral-500 leading-relaxed font-light bg-neutral-50/30">
-                  {item.a}
-                </p>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
-
     </div>
   );
 }
