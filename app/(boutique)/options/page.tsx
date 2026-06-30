@@ -21,7 +21,7 @@ interface Product {
   sizes?: string[];
 }
 
-function OptionsContent() {
+export default function OptionsPage() {
   const searchParams = useSearchParams();
   const productIdFromUrl = searchParams.get("id");
 
@@ -60,6 +60,21 @@ function OptionsContent() {
     if (!cat) return "";
     const trimmed = cat.trim();
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  };
+
+  // Fonction utilitaire pour associer les noms de couleur à un code Hexadécimal visuel
+  const getColorHex = (colorName: string): string => {
+    const name = colorName.trim().toLowerCase();
+    if (name.includes("noir")) return "#171717";
+    if (name.includes("blanc")) return "#ffffff";
+    if (name.includes("ivoire")) return "#f4f1ea";
+    if (name.includes("rose")) return "#e8c3ba";
+    if (name.includes("rouge")) return "#dc2626";
+    if (name.includes("bleu")) return "#2563eb";
+    if (name.includes("vert")) return "#16a34a";
+    if (name.includes("gris")) return "#737373";
+    if (name.includes("taupe")) return "#8b8589";
+    return "#d4d4d8"; // Teinte neutre par défaut pour "Standard" ou autres
   };
 
   // Extraction automatique des produits de la même catégorie
@@ -147,23 +162,28 @@ L'article est-il bien disponible pour une livraison ?`;
             </header>
 
             <main className="space-y-8">
-              {/* Choix 1 : La Couleur */}
+              {/* Choix 1 : La Couleur sous forme de Pastilles Visuelles */}
               <section className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">1. Teinte disponible en stock</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.colors.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`px-4 py-2 text-xs transition-all duration-200 border rounded-xl font-semibold ${
-                        selectedColor === color 
-                          ? "border-neutral-950 bg-neutral-950 text-white shadow-sm" 
-                          : "border-neutral-200 text-neutral-600 bg-white hover:border-neutral-400"
-                      }`}
-                    >
-                      {color}
-                    </button>
-                  ))}
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                  1. Teinte disponible en stock : <span className="text-neutral-800 font-semibold normal-case tracking-normal pl-1">{selectedColor}</span>
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.colors.map((color) => {
+                    const hexValue = getColorHex(color);
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        title={color}
+                        className={`w-8 h-8 rounded-full transition-all duration-200 border shadow-sm relative ${
+                          selectedColor === color 
+                            ? "border-neutral-950 ring-2 ring-neutral-950 ring-offset-2 scale-105" 
+                            : "border-neutral-200 hover:border-neutral-400 hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: hexValue }}
+                      />
+                    );
+                  })}
                 </div>
               </section>
 
@@ -248,21 +268,5 @@ L'article est-il bien disponible pour une livraison ?`;
 
       </div>
     </div>
-  );
-}
-
-export default function Options() {
-  return (
-    <Suspense 
-      fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <p className="text-xs tracking-widest text-neutral-400 uppercase animate-pulse">
-            Initialisation du studio...
-          </p>
-        </div>
-      }
-    >
-      <OptionsContent />
-    </Suspense>
   );
 }

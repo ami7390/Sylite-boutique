@@ -48,11 +48,21 @@ export default function CollectionPage() {
   // CATALOGUE LOGIQUE CENTRALISÉ ET NORMALISÉ
   // =========================================================================
   
-  // Fonction utilitaire pour uniformiser le texte des catégories et éviter les doublons
+  // Fonction utilitaire pour uniformiser le texte des catégories, supprimer les doublons et fusionner le contenu
   const cleanCategoryName = (cat: string): string => {
     if (!cat) return "";
-    const trimmed = cat.trim();
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    const trimmed = cat.trim().toLowerCase();
+    
+    // Fusion explicite des catégories cibles
+    if (trimmed.includes("soin") || trimmed.includes("meditation") || trimmed.includes("méditation")) {
+      return "Soin et méditation";
+    }
+    if (trimmed.startsWith("gaine")) {
+      return "Gaines";
+    }
+
+    // Uniformisation standard par défaut
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   };
 
   // Génération dynamique des catégories uniques propres et fusionnées
@@ -78,7 +88,7 @@ export default function CollectionPage() {
         ...p,
         id: p.id,
         name: p.name || '',
-        category: cleanCategoryName(p.category || ''), // Catégorie nettoyée appliquée au produit
+        category: cleanCategoryName(p.category || ''), // Catégorie nettoyée et fusionnée appliquée au produit
         image: p.image || '',
         cleanPrice: numericPrice,
         displayPrice: formattedPrice,
@@ -173,19 +183,7 @@ export default function CollectionPage() {
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-1 overflow-x-auto max-w-2xl no-scrollbar py-1">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => { setSelectedCategory(cat); setVisibleCount(8); }}
-                className={`px-3 py-1.5 font-semibold rounded-lg transition-all ${
-                  selectedCategory === cat ? "bg-purple-600 text-white shadow-sm" : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/70"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+          {/* FILTRE HORIZONTAL SUPPRIMÉ D'ICI - LE DESIGN NE BOUGE PAS */}
 
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-1 border-r border-neutral-200 pr-4 text-neutral-400">
@@ -411,7 +409,7 @@ export default function CollectionPage() {
 
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-neutral-100">
                   <span className="font-bold text-neutral-900">{product.displayPrice}</span>
-                  <span className="text-[10px] font-medium text-neutral-400 group-hover:text-neutral-600 transition-colors">Voir ›</span>
+                  <span className="text-[10px] font-medium text-purple-600 group-hover:translate-x-0.5 transition-transform">Voir ›</span>
                 </div>
               </div>
             ))}
