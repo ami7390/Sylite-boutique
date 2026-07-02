@@ -3,9 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseclient'
 
-// Chargement sécurisé du module
-const productsModule = require('../data/products')
-const localProducts = productsModule.allProducts || productsModule.products || []
+// @ts-ignore - On ignore l'avertissement TypeScript pour l'import JavaScript brut
+import { allProducts } from '../data/products'
 
 interface Product {
   id?: string
@@ -28,7 +27,7 @@ export default function ProductGrid({ filterCategory }: ProductGridProps) {
       try {
         setLoading(true)
         
-        // 1. Récupération depuis Supabase
+        // 1. Récupération des données depuis Supabase
         let query = (supabase as any).from('products').select('*')
 
         if (filterCategory) {
@@ -41,15 +40,15 @@ export default function ProductGrid({ filterCategory }: ProductGridProps) {
 
         const dbProducts: any[] = supabaseProducts || []
 
-        // 2. Préparation de la liste locale de secours
-        const baseLocalList = Array.isArray(localProducts) ? localProducts : []
+        // 2. Préparation sécurisée de la liste locale (fallback)
+        const baseLocalList = Array.isArray(allProducts) ? allProducts : []
         const localItemsToFilter = filterCategory
           ? baseLocalList.filter((p: any) => p.category === filterCategory)
           : baseLocalList
 
-        // 3. Synchronisation si la DB est vide ou incomplète
+        // 3. Synchronisation automatique si Supabase a moins d'articles
         if (dbProducts.length < localItemsToFilter.length) {
-          console.log("Synchronisation de l'univers SyLite vers la base de données...")
+          console.log("Liaison en cours : synchronisation de allProducts vers Supabase...")
           
           const missingProducts = localItemsToFilter.filter((localP: any) => 
             !dbProducts.some((dbP: any) => dbP.name === localP.name)
@@ -63,7 +62,6 @@ export default function ProductGrid({ filterCategory }: ProductGridProps) {
                   name: p.name,
                   price: p.price,
                   category: p.category,
-                  // CORRECTION ICI : On prend 'p.image' qui vient de ton fichier et on le met dans 'image_url' pour Supabase
                   image_url: p.image || p.image_url || '/placeholder.jpg'
                 }))
               )
@@ -72,7 +70,12 @@ export default function ProductGrid({ filterCategory }: ProductGridProps) {
               let updatedQuery = (supabase as any).from('products').select('*')
               if (filterCategory) updatedQuery = updatedQuery.eq('category', filterCategory)
               const { data: updatedData } = await updatedQuery
-              setProducts(updatedData || [])
+              
+              const formattedUpdated = (updatedData || []).map((p: any) => ({
+                ...p,
+                image_url: p.image_url || p.image || '/placeholder.jpg'
+              }))
+              setProducts(formattedUpdated)
               return
             } else {
               console.error("Erreur insertion Supabase :", insertError)
@@ -80,16 +83,21 @@ export default function ProductGrid({ filterCategory }: ProductGridProps) {
           }
         }
 
-        setProducts(dbProducts)
+        // Si tout est déjà synchronisé, on formate pour l'affichage
+        const formattedDbProducts = dbProducts.map((p: any) => ({
+          ...p,
+          image_url: p.image_url || p.image || '/placeholder.jpg'
+        }))
+        setProducts(formattedDbProducts)
 
       } catch (error) {
-        console.error('Erreur, bascule sur les données locales :', error)
-        const baseLocalList = Array.isArray(localProducts) ? localProducts : []
+        console.error('Erreur Supabase, bascule immédiate sur les données locales :', error)
+        
+        const baseLocalList = Array.isArray(allProducts) ? allProducts : []
         const fallbackData = filterCategory 
           ? baseLocalList.filter((p: any) => p.category === filterCategory)
           : baseLocalList
         
-        // CORRECTION ICI : On adapte l'affichage local pour qu'il trouve l'image
         const formattedFallback = fallbackData.map((p: any) => ({
           ...p,
           image_url: p.image || p.image_url || '/placeholder.jpg'
