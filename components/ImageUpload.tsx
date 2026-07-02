@@ -17,11 +17,10 @@ export default function ImageUpload() {
 
       const file = event.target.files[0]
       const fileExt = file.name.split('.').pop()
-      // On crée un nom de fichier unique basé sur le timestamp
       const fileName = `${Date.now()}.${fileExt}`
       const filePath = `fashion-images/${fileName}`
 
-      // Envoi du fichier vers le bucket 'images' de Supabase
+      // 1. Envoi du fichier vers le bucket 'images'
       const { error: uploadError } = await supabase.storage
         .from('images')
         .upload(filePath, file)
@@ -30,13 +29,30 @@ export default function ImageUpload() {
         throw uploadError
       }
 
-      // Récupération de l'URL publique de l'image
+      // 2. Récupération de l'URL publique de l'image
       const { data } = supabase.storage.from('images').getPublicUrl(filePath)
-      setImageUrl(data.publicUrl)
-      alert('Image téléversée avec succès !')
+      const publicUrl = data.publicUrl
+      setImageUrl(publicUrl)
+
+      // 3. Force le passage sans typage strict pour ignorer l'ancien schéma local
+      const { error: dbError } = await (supabase as any)
+        .from('products')
+        .insert({
+          name: "Nouvel Article Chic",
+          price: "25 000 F CFA",
+          category: "Nouvel Arrivage",
+          image_url: publicUrl
+        })
+
+      if (dbError) {
+        throw dbError
+      }
+
+      alert('Image et produit ajoutés avec succès à la base de données ! 🎉')
 
     } catch (error: any) {
       alert(error.message || "Une erreur est survenue lors de l'envoi.")
+      console.error("Détails de l'erreur :", error)
     } finally {
       setUploading(false)
     }
