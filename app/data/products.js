@@ -926,6 +926,160 @@ export const allProducts = [
       image: "/crop-top-1500.jpg",
       isNew: true
     },
+    { 
+      id: 184, 
+      name: "Collant Culotte", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collant-7.jpg",
+      isNew: true
+    },
+    { 
+      id: 185, 
+      name: "Collant Culotte ", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collants.jpg",
+      isNew: true
+    },
+    { 
+      id: 186, 
+      name: "Collant Culotte", 
+      price: "5.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collants-1.jpg",
+      isNew: true
+    },
+    { 
+      id: 187, 
+      name: "Collant Culotte 100% coton", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collants-2.jpg",
+      isNew: true
+    },
+    { 
+      id: 188, 
+      name: "Collant Culotte 100% coton", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collants-3.jpg",
+      isNew: true
+    },
+    { 
+      id: 189, 
+      name: "Collant Culotte 100% coton", 
+      price: "3.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collants-4.jpg",
+      isNew: true
+    },
+    { 
+      id: 190, 
+      name: "Collant Culotte 100% coton", 
+      price: "5.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collants-5.jpg",
+      isNew: true
+    },
+    { 
+      id: 191, 
+      name: "Collant Culotte", 
+      price: "5.000 FCFA", 
+      category: "collant", 
+      badge: "Essentiel", 
+      image: "/collants-6.jpg",
+      isNew: true
+    },
+    { 
+      id: 192, 
+      name: "Soutien-Gorge Minimiseur sans armature Multi-Couleur", 
+      price: "2.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient.jpg",
+      isNew: true
+    },
+    { 
+      id: 193, 
+      name: "Soutien-Gorge Minimiseur sans armature réduit la poitrine d'une taille de bonnet, bretelles élastiques", 
+      price: "2.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-1.jpg",
+      isNew: true
+    },
+    { 
+      id: 194, 
+      name: "Soutien-Gorge Minimiseur sans armature réduit la poitrine d'une taille de bonnet, bretelles élastiques", 
+      price: "2.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-6.jpg",
+      isNew: true
+    },
+    { 
+      id: 195, 
+      name: "Soutien-Gorge Minimiseur sans armature réduit la poitrine d'une taille de bonnet, bretelles élastiques", 
+      price: "2.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-7.jpg",
+      isNew: true
+    },
+    { 
+      id: 196, 
+      name: "Soutien-Gorge Minimiseur sans armature réduit la poitrine d'une taille de bonnet, bretelles élastiques", 
+      price: "2.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-9.jpg",
+      isNew: true
+    },
+    { 
+      id: 197, 
+      name: "Soutien-Gorge Minimiseur sans armature réduit la poitrine d'une taille de bonnet, bretelles élastiques", 
+      price: "2.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-10.jpg",
+      isNew: true
+    },
+{ 
+      id: 198, 
+      name: "Soutien-Gorge Minimiseur Fermeture Devant sans armature, bretelles élastiques, Confort pour Taille Grande", 
+      price: "7.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-4.jpg",
+      isNew: true
+    },
+    { 
+      id: 199, 
+      name: "Soutien-Gorge Minimiseur sans armature réduit la poitrine d'une taille de bonnet, bretelles élastiques", 
+      price: "7.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-2.jpg",
+      isNew: true
+    },
+    { 
+      id: 200, 
+      name: "Soutien-Gorge Minimiseur sans armature réduit la poitrine d'une taille de bonnet, bretelles élastiques", 
+      price: "7.000 FCFA", 
+      category: "Soutien-Gorge", 
+      badge: "Seconde Peau", 
+      image: "/soutient-5.jpg",
+      isNew: true
+    },
+   
     {
       id: 11,
       name: "Robot Domestique Intuitif & Électroménager Connecté",

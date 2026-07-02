@@ -3,11 +3,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+
 // Importation du catalogue dynamique partagé
 import { allProducts } from '../../data/products';
 
-// 1. Correction de l'interface pour inclure les options facultatives de votre catalogue
+// Interface ajustée pour refléter la flexibilité des données de votre catalogue
 interface Product {
   id: number;
   name: string;
@@ -16,7 +16,7 @@ interface Product {
   tag?: string;
   badge?: string;
   image: string;
-  inStock: boolean;
+  inStock?: boolean; // Rendu optionnel pour éviter les bugs si manquant dans products.js
   colors?: string[];
   sizes?: string[];
 }
@@ -35,8 +35,12 @@ export default function OptionsPage() {
       ? found.price 
       : `${Number(found.price || 0).toLocaleString('fr-FR')} FCFA`;
 
+    // CORRECTION ICI : Si "inStock" n'est pas défini dans l'objet initial, on force "true" par défaut.
+    const isAvailable = found.hasOwnProperty('inStock') ? found.inStock : true;
+
     return {
       ...found,
+      inStock: isAvailable,
       displayPrice: formattedPrice,
       colors: found.colors || ["Standard", "Noir", "Ivoire", "Rose Poudré"],
       sizes: found.sizes || ["XS", "S", "M", "L", "XL"]
@@ -47,7 +51,7 @@ export default function OptionsPage() {
   const [selectedColor, setSelectedColor] = useState<string>("Standard");
   const [selectedSize, setSelectedSize] = useState<string>("M");
 
-  // 2. CORRECTION : Remplacement de useMemo par useEffect pour mettre à jour les choix par défaut
+  // Mise à jour automatique des sélections par défaut au chargement du produit
   useEffect(() => {
     if (product) {
       if (product.colors && product.colors.length > 0) setSelectedColor(product.colors[0]);
@@ -74,7 +78,7 @@ export default function OptionsPage() {
     if (name.includes("vert")) return "#16a34a";
     if (name.includes("gris")) return "#737373";
     if (name.includes("taupe")) return "#8b8589";
-    return "#d4d4d8"; // Teinte neutre par défaut pour "Standard" ou autres
+    return "#d4d4d8"; // Teinte neutre par défaut
   };
 
   // Extraction automatique des produits de la même catégorie
@@ -90,7 +94,7 @@ export default function OptionsPage() {
       }));
   }, [product]);
 
-  // Redirection personnalisée vers WhatsApp
+  // Redirection vers WhatsApp
   const handleWhatsAppOrder = () => {
     if (!product) return;
     const WHATSAPP_NUMBER = "22394939380";
@@ -139,7 +143,8 @@ L'article est-il bien disponible pour une livraison ?`;
                 sizes="(max-w-lg) 100vw, 50vw"
                 priority
               />
-              {!product.inStock && (
+              {/* MODIFICATION ICI : Condition stricte sur l'état false pour masquer le badge si inStock est true */}
+              {product.inStock === false && (
                 <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[1px] flex items-center justify-center">
                   <span className="bg-neutral-900/90 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-lg border border-neutral-800">Épuisé</span>
                 </div>
@@ -162,7 +167,7 @@ L'article est-il bien disponible pour une livraison ?`;
             </header>
 
             <main className="space-y-8">
-              {/* Choix 1 : La Couleur sous forme de Pastilles Visuelles */}
+              {/* Choix 1 : La Couleur */}
               <section className="space-y-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
                   1. Teinte disponible en stock : <span className="text-neutral-800 font-semibold normal-case tracking-normal pl-1">{selectedColor}</span>
@@ -211,9 +216,14 @@ L'article est-il bien disponible pour une livraison ?`;
               <div className="pt-6 border-t border-neutral-100 space-y-3">
                 <button 
                   onClick={handleWhatsAppOrder}
-                  className="w-full inline-flex justify-center items-center gap-2 px-6 py-4 bg-emerald-600 text-white text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-emerald-500 transition-all shadow-sm shadow-emerald-600/10"
+                  disabled={product.inStock === false}
+                  className={`w-full inline-flex justify-center items-center gap-2 px-6 py-4 text-white text-xs font-bold tracking-wider uppercase rounded-xl transition-all shadow-sm ${
+                    product.inStock === false 
+                      ? "bg-neutral-300 cursor-not-allowed shadow-none" 
+                      : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/10"
+                  }`}
                 >
-                  <span>🛍️</span> Commander via WhatsApp
+                  <span>🛍️</span> {product.inStock === false ? "Article non disponible" : "Commander via WhatsApp"}
                 </button>
                 <p className="text-[10px] text-center text-neutral-400 font-light">
                   Votre sélection (*{selectedColor}* en taille *{selectedSize}*) sera partagée automatiquement dans la discussion.
@@ -269,4 +279,4 @@ L'article est-il bien disponible pour une livraison ?`;
       </div>
     </div>
   );
-}
+} 

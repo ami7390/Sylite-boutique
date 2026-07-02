@@ -1,5 +1,5 @@
 "use client";
-
+import ImageUpload from '@/components/ImageUpload'
 import { useState } from 'react';
 import Image from 'next/image';
 import { allProducts } from '../../data/products';
@@ -32,6 +32,7 @@ export default function NouveauArrivage() {
   const specialRequestUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(specialRequestMessage)}`;
 
   return (
+    
     <div className="bg-neutral-50 min-h-screen">
       
       {/* ================= BANNIÈRE HERO ================= */}
@@ -52,7 +53,7 @@ export default function NouveauArrivage() {
 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl z-0 pointer-events-none" />
       </section>
-
+<ImageUpload/>
       {/* ================= CONTEXTE LOGIQUE DE LA PAGE ================= */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-neutral-200 pb-6 gap-4">

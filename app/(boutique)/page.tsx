@@ -13,7 +13,7 @@ export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [activeTabSize, setActiveTabSize] = useState<string>("gaines");
   
-  // État du compte à rebours pour la Vente Flash (Simulé de manière perpétuelle pour l'exemple)
+  // État du compte à rebours pour la Vente Flash
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 34, seconds: 12 });
 
   useEffect(() => {
@@ -132,7 +132,7 @@ export default function Home() {
     },
     { 
       q: "Puis-je modifier ma commande ou faire un échange ?", 
-      a: "Tant que le colis n'est pas expédié, vous pouvez modifier votre commande directement sur WhatsApp. Pour des raisons d'hygiène évidentes, les articles de lingerie fine et gaines ne sont ni repris ni échangés une fois portés. Pour le prêt-à-porter, contactez notre support sous 24h après réception." 
+      a: "Tant que le colis n'est pas expédié, vous pouvez modifier votre commande directement sur WhatsApp. Pour des raisons d'hygiène évidents, les articles de lingerie fine et gaines ne sont ni repris ni échangés une fois portés. Pour le prêt-à-porter, contactez notre support sous 24h après réception." 
     },
   ];
 
@@ -164,16 +164,34 @@ export default function Home() {
           <div className="hidden lg:block h-[500px]"></div>
         </div>
         
-        {/* CHANGEMENT ICI : w-[50%] pour élargir le conteneur, et objectFit="cover" pour remplir l'espace */}
-        <div className="absolute bottom-0 right-0 z-10 hidden lg:block w-[50%] h-full max-h-[100%] overflow-hidden">
-          <Image 
-            src="/ouverture.png"
-            alt="Boutique de mode en ligne et articles de bien-être pour femme"
-            layout="fill"
-            objectFit="cover"
-            objectPosition="bottom right"
-            priority
-          />
+        {/* DEUX IMAGES SUPERPOSÉES STYLE LOOKBOOK DE MODE */}
+        <div className="absolute bottom-0 right-0 z-10 hidden lg:block w-[50%] h-full max-h-[100%] overflow-visible">
+          
+          {/* Image Principale Arrière-plan (ouverture.png) */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden">
+            <Image 
+              src="/ouverture.png"
+              alt="Boutique de mode en ligne et articles de bien-être pour femme"
+              layout="fill"
+              objectFit="cover"
+              objectPosition="bottom right"
+              priority
+              quality={100}
+              unoptimized
+            />
+          </div>
+
+          {/* Deuxième Image Flottante Avant-plan - AGRANDIE ICI (w-64 h-80 au lieu de w-56 h-72) */}
+          <div className="absolute bottom-12 left-6 w-64 h-80 rounded-2xl overflow-hidden border-4 border-neutral-950 shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-300">
+            <Image 
+              src="/ouverture-1.png"
+              alt="Focus Collection Sylite"
+              layout="fill"
+              objectFit="cover"
+              priority
+            />
+          </div>
+
         </div>
         <div className="absolute top-1/2 right-10 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl hidden lg:block z-0" />
       </section>
@@ -522,20 +540,10 @@ export default function Home() {
                 href="/electromenager" 
                 className="inline-flex items-center gap-2 px-6 py-3.5 text-xs font-bold tracking-wider text-white uppercase rounded-xl bg-purple-600 hover:bg-purple-500 shadow-md shadow-purple-900/20 transition-all duration-300 transform hover:-translate-y-0.5"
               >
-                Découvrir la Gamme Connectée
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
+                Découvrir la Gamme
               </a>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ================= FAQ INTERACTIVE ACCORDÉON ================= */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center max-w-xl mx-auto mb-12">
-          <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest block mb-2">Des Réponses Claires</span>
         </div>
       </section>
     </div>
