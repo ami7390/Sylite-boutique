@@ -1,156 +1,109 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseclient'
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseclient';
 
-// @ts-ignore - On ignore l'avertissement TypeScript pour l'import JavaScript brut
-import { allProducts } from '../data/products'
+// Utilisation de l'alias absolu pour cibler directement ton vrai fichier
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
+import { allProducts as productsData } from '@/app/data/products';
 
 interface Product {
-  id?: string
-  name: string
-  price: string
-  category: string
-  image_url: string
+  id: string | number;
+  name: string;
+  price: number | string;
+  category: string;
+  image_url: string;
 }
 
 interface ProductGridProps {
-  filterCategory?: string
+  filterCategory?: string;
 }
 
 export default function ProductGrid({ filterCategory }: ProductGridProps) {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const WHATSAPP_NUMBER = "22394939380";
 
   useEffect(() => {
-    const fetchAndSyncProducts = async () => {
+    const loadAllProducts = async () => {
+      setLoading(true);
       try {
-        setLoading(true)
-        
-        // 1. Récupération des données depuis Supabase
-        let query = (supabase as any).from('products').select('*')
+        // 1. Récupération des produits en ligne (Supabase)
+        const { data: supabaseProducts, error } = await (supabase as any)
+          .from('products')
+          .select('*');
 
+        // 2. Récupération de TOUS tes vrais produits depuis app/data/products.js
+        const localItems = Array.isArray(productsData) 
+          ? productsData 
+          : (productsData as any).products || [];
+
+        let combinedList = [...localItems];
+
+        // Si Supabase contient des produits, on les fusionne au début
+        if (!error && supabaseProducts && supabaseProducts.length > 0) {
+          combinedList = [...supabaseProducts, ...combinedList];
+        }
+
+        // 3. Application du filtrage par catégorie
         if (filterCategory) {
-          query = query.eq('category', filterCategory)
+          combinedList = combinedList.filter(
+            (p) => p.category?.toLowerCase() === filterCategory.toLowerCase()
+          );
         }
 
-        const { data: supabaseProducts, error } = await query
-
-        if (error) throw error
-
-        const dbProducts: any[] = supabaseProducts || []
-
-        // 2. Préparation sécurisée de la liste locale (fallback)
-        const baseLocalList = Array.isArray(allProducts) ? allProducts : []
-        const localItemsToFilter = filterCategory
-          ? baseLocalList.filter((p: any) => p.category === filterCategory)
-          : baseLocalList
-
-        // 3. Synchronisation automatique si Supabase a moins d'articles
-        if (dbProducts.length < localItemsToFilter.length) {
-          console.log("Liaison en cours : synchronisation de allProducts vers Supabase...")
-          
-          const missingProducts = localItemsToFilter.filter((localP: any) => 
-            !dbProducts.some((dbP: any) => dbP.name === localP.name)
-          )
-
-          if (missingProducts.length > 0) {
-            const { error: insertError } = await (supabase as any)
-              .from('products')
-              .insert(
-                missingProducts.map((p: any) => ({
-                  name: p.name,
-                  price: p.price,
-                  category: p.category,
-                  image_url: p.image || p.image_url || '/placeholder.jpg'
-                }))
-              )
-
-            if (!insertError) {
-              let updatedQuery = (supabase as any).from('products').select('*')
-              if (filterCategory) updatedQuery = updatedQuery.eq('category', filterCategory)
-              const { data: updatedData } = await updatedQuery
-              
-              const formattedUpdated = (updatedData || []).map((p: any) => ({
-                ...p,
-                image_url: p.image_url || p.image || '/placeholder.jpg'
-              }))
-              setProducts(formattedUpdated)
-              return
-            } else {
-              console.error("Erreur insertion Supabase :", insertError)
-            }
-          }
-        }
-
-        // Si tout est déjà synchronisé, on formate pour l'affichage
-        const formattedDbProducts = dbProducts.map((p: any) => ({
-          ...p,
-          image_url: p.image_url || p.image || '/placeholder.jpg'
-        }))
-        setProducts(formattedDbProducts)
-
-      } catch (error) {
-        console.error('Erreur Supabase, bascule immédiate sur les données locales :', error)
-        
-        const baseLocalList = Array.isArray(allProducts) ? allProducts : []
-        const fallbackData = filterCategory 
-          ? baseLocalList.filter((p: any) => p.category === filterCategory)
-          : baseLocalList
-        
-        const formattedFallback = fallbackData.map((p: any) => ({
-          ...p,
-          image_url: p.image || p.image_url || '/placeholder.jpg'
-        }))
-        setProducts(formattedFallback as Product[])
+        setProducts(combinedList);
+      } catch (err) {
+        console.error("Erreur lors du chargement combiné :", err);
+        const fallback = Array.isArray(productsData) ? productsData : (productsData as any).products || [];
+        setProducts(filterCategory ? fallback.filter((p: any) => p.category === fallback) : fallback);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchAndSyncProducts()
-  }, [filterCategory])
+    loadAllProducts();
+  }, [filterCategory]);
 
   if (loading) {
-    return <div className="text-center py-10 text-gray-500">Chargement des articles SyLite...</div>
-  }
-
-  if (products.length === 0) {
-    return <div className="text-center py-10 text-gray-500">Aucun article trouvé.</div>
+    return <div className="text-center py-10 text-neutral-400 text-xs animate-pulse">Chargement de la collection SyLite...</div>;
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4">
-      {products.map((product: any) => (
-        <div key={product.id || product.name} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition bg-white flex flex-col">
-          <div className="w-full h-72 bg-gray-100 relative">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {products.map((product, index) => (
+        /* ICI : Modification de la key pour s'assurer qu'elle soit unique au monde, combinant ID, nom et index */
+        <div key={`product-${product.id}-${product.name}-${index}`} className="bg-neutral-900/40 border border-neutral-800/80 rounded-2xl overflow-hidden group hover:border-purple-500/30 transition-all duration-300 flex flex-col justify-between">
+          <div className="aspect-square relative overflow-hidden bg-neutral-950">
             <img 
-              src={product.image_url || '/placeholder.jpg'} 
+              src={product.image_url || (product as any).image} 
               alt={product.name} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" 
             />
-            <span className="absolute top-2 left-2 bg-black text-white text-xs px-2 py-1 rounded font-medium opacity-90 uppercase">
+            <span className="absolute top-3 left-3 bg-purple-900/80 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-purple-500/30 backdrop-blur-sm">
               {product.category}
             </span>
           </div>
-
-          <div className="p-4 flex flex-col flex-grow justify-between gap-2">
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg line-clamp-2 min-h-[56px]">{product.name}</h3>
-              <p className="text-gray-800 font-medium mt-1">{product.price}</p>
+          
+          <div className="p-5 flex flex-col flex-grow justify-between">
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-white tracking-wide">{product.name}</h4>
+              <p className="text-purple-400 font-serif font-semibold text-sm mt-1">{product.price} FCFA</p>
             </div>
-            
+
             <a 
-              href={`https://wa.me/22373904319?text=Bonjour,%20je%20suis%20intéressé(e)%20par%20l'article%20:%20${encodeURIComponent(product.name)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-black text-white text-center py-2 rounded text-sm font-medium hover:bg-gray-800 transition mt-2"
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=Bonjour%20SyLite,%20je%20souhaite%20commander%20l'article%20%22${encodeURIComponent(product.name)}%22%20au%20prix%20de%20${product.price}%20FCFA.`}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-full text-center py-2.5 bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold rounded-xl uppercase tracking-wider transition-all shadow-md shadow-purple-700/20 flex items-center justify-center gap-2"
             >
-              Commander via WhatsApp
+              Commander via WhatsApp 💬
             </a>
           </div>
         </div>
       ))}
     </div>
-  )
+  );
 }

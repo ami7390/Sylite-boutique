@@ -5,7 +5,7 @@ export const allProducts = [
   {
     id: 1,
     name: "Ensemble Femme Chic et Tendance",
-    price: "75.000 FCFA",
+    price: "7.500 FCFA",
     category: "Ensemble",
     badge: "Tendance",
     image: "/ensemble-fleuri.jpg", // Le chemin vers ton image dans le dossier public
@@ -13,7 +13,7 @@ export const allProducts = [
   {
     id: 2,
     name: "Nuisette en 100% coton",
-    price: "45.000 FCFA",
+    price: "6.000 FCFA",
     category: "Nuisette",
     badge: "Incontournable",
     image: "/nusette.jpg",
@@ -42,7 +42,7 @@ export const allProducts = [
       price: "22.500 FCFA", 
       category: "Bien-être", 
       badge: "Ambiance", 
-      image: "/diffuseur 8000.jpg",
+      image: "/diffuseur-8000.jpg",
       isNew: true
     },
     { 
@@ -68,7 +68,7 @@ export const allProducts = [
       price: "20.000 FCFA", 
       category: "Bien-être", 
       badge: "Luxe", 
-      image: "/diffuseur-8000.jpg",
+      image: "/diffusseur.jpg",
       isNew: true
     },
     { 
@@ -149,7 +149,7 @@ export const allProducts = [
       price: "6.000 FCFA", 
       category: "Voiles", 
       badge: "Essentiel", 
-      image: "/hidjab.jpg",
+      image: "/hidjab-6000.jpg",
       isNew: false
     },
     { 
@@ -158,7 +158,7 @@ export const allProducts = [
       price: "12.000 FCFA", 
       category: "Voiles", 
       badge: "Prestige", 
-      image: "/khimar-complet.jpg",
+      image: "/khimar-complet-12000.jpg",
       isNew: true
     },
     { 
