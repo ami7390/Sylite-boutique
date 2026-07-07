@@ -36,12 +36,52 @@ export default function NouvelArrivagePage() {
   const localItems = Array.isArray(allProducts) ? allProducts : [];
   const fullListForStats = [...dbProducts, ...localItems];
 
-  const categories = ["Tous", ...Array.from(new Set(fullListForStats.map((p) => p.category).filter(Boolean)))];
+  // Dictionnaire de forçage pour fusionner et corriger précisément les doublons restants
+  const categoryCorrections: { [key: string]: string } = {
+    "gaine": "Gaines",
+    "gaines": "Gaines",
+    "soin et meditation": "Soin et méditation",
+    "soin et méditation": "Soin et méditation",
+    "soins et méditation": "Soin et méditation",
+    "meditation": "Soin et méditation",
+    "méditation": "Soin et méditation"
+  };
+
+  // FUSION, CORRECTION ET NETTOYAGE STRICT DES CATÉGORIES
+  const categories = [
+    "Tous",
+    ...Array.from(
+      new Set(
+        fullListForStats
+          .map((p) => {
+            if (!p.category) return "";
+            
+            // Nettoyage de base (minuscule et sans espaces superflus)
+            const normalizedLower = p.category.trim().toLowerCase();
+            
+            // 1. Vérification si la catégorie est dans notre liste de corrections spécifiques
+            if (categoryCorrections[normalizedLower]) {
+              return categoryCorrections[normalizedLower];
+            }
+            
+            // 2. Correction générique par défaut (Première lettre en Majuscule)
+            return normalizedLower.charAt(0).toUpperCase() + normalizedLower.slice(1);
+          })
+          .filter(Boolean)
+      )
+    )
+  ];
+
   const limitedStockProducts = localItems.slice(0, 3);
 
   const displayCount = selectedCategory === "Tous" 
     ? fullListForStats.length 
-    : fullListForStats.filter(p => p.category?.toLowerCase() === selectedCategory.toLowerCase()).length;
+    : fullListForStats.filter(p => {
+        if (!p.category) return false;
+        const norm = p.category.trim().toLowerCase();
+        const currentMapped = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
+        return currentMapped.toLowerCase() === selectedCategory.toLowerCase();
+      }).length;
 
   const specialRequestMessage = `Bonjour SYLITE, je regarde vos nouveaux arrivages mais je recherche un article spécifique qui n'est pas listé sur la page. Pouvez-vous m'aider ?`;
   const specialRequestUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(specialRequestMessage)}`;
@@ -143,6 +183,7 @@ export default function NouvelArrivagePage() {
           refreshKey={refreshKey}
           onProductDeleted={() => setRefreshKey(prev => prev + 1)}
           showAdminActions={isAdminAuthenticated}
+          categoryCorrections={categoryCorrections}
         />
       </main>
 
@@ -178,13 +219,15 @@ export default function NouvelArrivagePage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {limitedStockProducts.map((product: any, index: number) => {
             const displayPrice = String(product.price).includes("FCFA") ? product.price : `${product.price} FCFA`;
+            const rawCat = product.category || "";
+            const cleanCat = categoryCorrections[rawCat.trim().toLowerCase()] || (rawCat.trim().charAt(0).toUpperCase() + rawCat.trim().slice(1).toLowerCase());
             return (
-              <div key={`limited-${product.id || 'idx'}-${index}`} className="bg-white border border-neutral-200/60 rounded-2xl p-4 flex items-center gap-4 hover:border-purple-200 transition-all">
+              <div key={`limited-local-render-${product.id || index}-${index}`} className="bg-white border border-neutral-200/60 rounded-2xl p-4 flex items-center gap-4 hover:border-purple-200 transition-all">
                 <div className="relative w-20 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100">
                   <img src={product.image || product.image_url} alt={product.name} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-grow min-w-0">
-                  <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block">{product.category}</span>
+                  <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block">{cleanCat}</span>
                   <h4 className="text-xs font-semibold text-neutral-800 truncate mb-1">{product.name}</h4>
                   <div className="text-sm font-black text-neutral-900 mb-2">{displayPrice}</div>
                   <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Bonjour, je souhaite réserver en urgence l'article : ${product.name}`)}`} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-purple-600 hover:text-purple-700 transition-colors flex items-center gap-1">
@@ -200,7 +243,7 @@ export default function NouvelArrivagePage() {
   );
 }
 
-// ================= LE PANNEAU ADMINISTRATEUR AJUSTÉ =================
+// ================= LE PANNEAU ADMINISTRATEUR SÉCURISÉ =================
 function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProductChange: () => void, existingCategories: string[], onLogout: () => void }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -228,19 +271,21 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
     }
 
     setAdding(true);
-    const finalCategory = category === "new" ? newCategory : category;
+    const finalCategory = category === "new" ? newCategory.trim() : category;
 
     try {
-      const { error } = await (supabase as any).from("products").insert([
+      const { data, error } = await (supabase as any).from("products").insert([
         {
           name,
           price: parseFloat(price),
           category: finalCategory,
           image_url: imageUrl || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600",
         }
-      ]);
+      ]).select();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       alert("Produit ajouté avec succès !");
       setName("");
@@ -251,7 +296,7 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
       onProductChange();
     } catch (err: any) {
       console.error("Détail erreur Supabase :", err);
-      alert(`Erreur lors de l'ajout: ${err.message || "Vérifiez la structure de votre table Supabase."}`);
+      alert(`Erreur lors de l'ajout: ${err.message || "Vérifiez la configuration RLS de votre table Supabase."}`);
     } finally {
       setAdding(false);
     }
@@ -323,8 +368,8 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
   );
 }
 
-// ================= GRILLE AVEC ACTIONS SUPPRIMER ASSOCIEES =================
-function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, showAdminActions }: { filterCategory?: string, refreshKey: number, onProductDeleted: () => void, showAdminActions: boolean }) {
+// ================= GRILLE CORRIGÉE SANS COLLISIONS D'ID =================
+function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, showAdminActions, categoryCorrections }: { filterCategory?: string, refreshKey: number, onProductDeleted: () => void, showAdminActions: boolean, categoryCorrections: { [key: string]: string } }) {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const WHATSAPP_NUMBER = "22394939380";
@@ -335,15 +380,34 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
       try {
         const { data: supabaseProducts, error } = await (supabase as any).from('products').select('*');
         const localItems = Array.isArray(allProducts) ? allProducts : [];
-        let combinedList = [...localItems];
+        
+        // 1. Éléments Supabase avec ID composite unique
+        const dbItemsWithPrefix = (supabaseProducts || []).map((p, i) => {
+          const norm = (p.category || "").trim().toLowerCase();
+          const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
+          return { 
+            ...p, 
+            displayCategory: corrected, 
+            safeId: `db-item-${p.id || i}-${i}` 
+          };
+        });
 
-        if (!error && supabaseProducts && supabaseProducts.length > 0) {
-          combinedList = [...supabaseProducts, ...combinedList];
-        }
+        // 2. Éléments locaux avec ID composite unique
+        const localItemsWithPrefix = localItems.map((p, i) => {
+          const norm = (p.category || "").trim().toLowerCase();
+          const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
+          return { 
+            ...p, 
+            displayCategory: corrected, 
+            safeId: `local-item-${p.id || i}-${i}` 
+          };
+        });
+
+        let combinedList = [...dbItemsWithPrefix, ...localItemsWithPrefix];
 
         if (filterCategory) {
           combinedList = combinedList.filter(
-            (p) => p.category?.toLowerCase() === filterCategory.toLowerCase()
+            (p) => p.displayCategory?.toLowerCase() === filterCategory.toLowerCase()
           );
         }
 
@@ -351,7 +415,18 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
       } catch (err) {
         console.error("Erreur de grille :", err);
         const fallback = Array.isArray(allProducts) ? allProducts : [];
-        setProducts(filterCategory ? fallback.filter((p: any) => p.category === filterCategory) : fallback);
+        
+        const normalizedFallback = fallback.map((p, i) => {
+          const norm = (p.category || "").trim().toLowerCase();
+          const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
+          return { 
+            ...p, 
+            displayCategory: corrected, 
+            safeId: `fallback-item-${p.id || i}-${i}` 
+          };
+        });
+        
+        setProducts(filterCategory ? normalizedFallback.filter((p: any) => p.displayCategory?.toLowerCase() === filterCategory.toLowerCase()) : normalizedFallback);
       } finally {
         setLoading(false);
       }
@@ -385,19 +460,15 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-      {products.map((product, index) => {
-        const isDbProduct = product.created_at || (!isNaN(Number(product.id)) && !allProducts.some((p: any) => p.id === product.id));
-        const originKey = isDbProduct ? 'db' : 'local';
-        
-        // Formater proprement le prix pour WhatsApp et le rendu
+      {products.map((product) => {
+        const isDbProduct = String(product.safeId).startsWith("db-");
         const rawPrice = product.price;
         const formattedPrice = String(rawPrice).includes("FCFA") ? rawPrice : `${rawPrice} FCFA`;
-
         const whatsappMessage = `Bonjour SYLITE, je souhaite commander l'article suivant :\n\n- *Produit :* ${product.name}\n- *Prix :* ${formattedPrice}\n\nEst-il disponible ?`;
         const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
 
         return (
-          <div key={`grid-${originKey}-${product.id || 'item'}-${index}`} className="bg-white rounded-2xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:border-purple-100 transition-all duration-300 group flex flex-col relative">
+          <div key={`product-card-container-${product.safeId}`} className="bg-white rounded-2xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:border-purple-100 transition-all duration-300 group flex flex-col relative">
             
             {isDbProduct && showAdminActions && (
               <button 
@@ -411,13 +482,13 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
             <div className="relative aspect-[4/5] bg-neutral-100 overflow-hidden">
               <img src={product.image_url || product.image} alt={product.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" />
               <span className="absolute bottom-3 left-3 bg-neutral-950/80 backdrop-blur-md text-purple-400 text-[9px] font-bold px-2.5 py-1 rounded-md border border-purple-500/10 z-10 uppercase tracking-wider">
-                {product.category}
+                {product.displayCategory || product.category}
               </span>
             </div>
             
             <div className="p-5 flex-grow flex flex-col justify-between">
               <div>
-                <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest block mb-1">{product.category}</span>
+                <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest block mb-1">{product.displayCategory || product.category}</span>
                 <h3 className="text-sm font-semibold text-neutral-800 line-clamp-2 mb-2 group-hover:text-purple-700 transition-colors">{product.name}</h3>
               </div>
 
