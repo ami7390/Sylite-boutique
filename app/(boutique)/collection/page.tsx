@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 // Importation du catalogue dynamique partagé
 import { allProducts } from '../../data/products';
+// Importation du client Supabase branché sur ton espace Admin
+import { supabase } from '@/lib/supabaseclient';
 
 // Interface produit standardisée
 interface Product {
-  id: number;
+  id: number | string;
   name: string;
   price: number | string; // Supporte le format numérique ou textuel (ex: "75.000 FCFA")
-  formattedPrice?: string;
   category: string;
   tag?: string;
   badge?: string;
@@ -35,23 +36,52 @@ export default function CollectionPage() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
   const [visibleCount, setVisibleCount] = useState<number>(8);
 
-  // État pour la section interactive des favoris
-  const [likedProducts, setLikedProducts] = useState<number[]>([]);
+  // États pour les données dynamiques de Supabase
+  const [dbProducts, setDbProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const toggleLike = (id: number) => {
+  // État pour la section interactive des favoris
+  const [likedProducts, setLikedProducts] = useState<string[]>([]);
+
+  const toggleLike = (id: string) => {
     setLikedProducts(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
 
   // =========================================================================
-  // CATALOGUE LOGIQUE CENTRALISÉ ET NORMALISÉ
+  // RÉCUPÉRATION DES PRODUITS DEPUIS SUPABASE (ESPACE ADMIN)
+  // =========================================================================
+  useEffect(() => {
+    const fetchDbProducts = async () => {
+      try {
+        const { data, error } = await (supabase as any).from("products").select("*");
+        if (!error && data) {
+          setDbProducts(data);
+        }
+      } catch (err) {
+        console.error("Erreur de récupération de la collection Supabase :", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDbProducts();
+  }, []);
+
+  // =========================================================================
+  // CATALOGUE LOGIQUE CENTRALISÉ ET NORMALISÉ (FUSION LOCAL + DB)
   // =========================================================================
   
   // Fonction utilitaire pour uniformiser le texte des catégories, supprimer les doublons et fusionner le contenu
   const cleanCategoryName = (cat: string): string => {
     if (!cat) return "";
     const trimmed = cat.trim().toLowerCase();
+    
+    // Fusion explicite et suppression des doublons pour l'Électroménager
+    if (trimmed.includes("electromenager") || trimmed.includes("électroménager")) {
+      return "Électroménager";
+    }
     
     // Fusion explicite des catégories cibles
     if (trimmed.includes("soin") || trimmed.includes("meditation") || trimmed.includes("méditation")) {
@@ -61,21 +91,41 @@ export default function CollectionPage() {
       return "Gaines";
     }
 
-    // Uniformisation standard par défaut
+    // Uniformisation standard par défaut (Première lettre en majuscule)
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   };
 
-  // Génération dynamique des catégories uniques propres et fusionnées
-  const categories = useMemo(() => {
-    const uniqueCategories = new Set(
-      allProducts.map(p => cleanCategoryName(p.category || ""))
-    );
-    return ["Tous", ...Array.from(uniqueCategories).filter(Boolean)];
-  }, []);
-
-  // Normalisation des prix à la volée et uniformisation des catégories pour le filtrage
+  // Normalisation et fusion des deux catalogues à la volée
   const normalizedCatalog = useMemo<NormalizedProduct[]>(() => {
-    return allProducts.map((p: any) => {
+    const localItems = Array.isArray(allProducts) ? allProducts : [];
+    
+    // 1. Normalisation des produits issus de Supabase (Admin)
+    const normalizedDb = dbProducts.map((p, idx) => {
+      const priceRaw = p.price;
+      const numericPrice = typeof priceRaw === 'string' 
+        ? parseInt(priceRaw.replace(/[^0-9]/g, ''), 10) 
+        : (typeof priceRaw === 'number' ? priceRaw : 0);
+
+      const formattedPrice = typeof priceRaw === 'string' && priceRaw.includes("FCFA")
+        ? priceRaw 
+        : `${Number(priceRaw || 0).toLocaleString('fr-FR')} FCFA`;
+
+      return {
+        id: `db-${p.id || idx}`,
+        name: p.name || '',
+        category: cleanCategoryName(p.category || ''),
+        image: p.image_url || p.image || '',
+        price: priceRaw,
+        cleanPrice: numericPrice,
+        displayPrice: formattedPrice,
+        tag: p.tag || p.badge || '',
+        badge: p.badge || '',
+        inStock: p.inStock !== undefined ? p.inStock : true
+      };
+    });
+
+    // 2. Normalisation des produits statiques locaux
+    const normalizedLocal = localItems.map((p: any, idx) => {
       const numericPrice = typeof p.price === 'string' 
         ? parseInt(p.price.replace(/[^0-9]/g, ''), 10) 
         : (typeof p.price === 'number' ? p.price : 0);
@@ -85,11 +135,11 @@ export default function CollectionPage() {
         : `${Number(p.price || 0).toLocaleString('fr-FR')} FCFA`;
 
       return {
-        ...p,
-        id: p.id,
+        id: `local-${p.id || idx}`,
         name: p.name || '',
-        category: cleanCategoryName(p.category || ''), // Catégorie nettoyée et fusionnée appliquée au produit
+        category: cleanCategoryName(p.category || ''),
         image: p.image || '',
+        price: p.price,
         cleanPrice: numericPrice,
         displayPrice: formattedPrice,
         tag: p.tag || '',
@@ -97,14 +147,25 @@ export default function CollectionPage() {
         inStock: p.inStock !== undefined ? p.inStock : true
       };
     });
-  }, []);
 
-  // Sélection automatique des 4 premiers articles du catalogue global pour les recommandations
+    // Combinaison : les nouveautés Supabase apparaissent en premier
+    return [...normalizedDb, ...normalizedLocal];
+  }, [dbProducts]);
+
+  // Génération dynamique des catégories uniques à partir du catalogue fusionné
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set(
+      normalizedCatalog.map(p => p.category)
+    );
+    return ["Tous", ...Array.from(uniqueCategories).filter(Boolean)];
+  }, [normalizedCatalog]);
+
+  // Sélection automatique des 4 premiers articles pour les recommandations
   const premiumRecommendations = useMemo(() => {
     return normalizedCatalog.slice(0, 4);
   }, [normalizedCatalog]);
 
-  // Moteur de filtrage et de tri appliqué sur le catalogue global dynamique
+  // Moteur de filtrage et de tri appliqué sur le catalogue fusionné
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...normalizedCatalog];
 
@@ -173,7 +234,7 @@ export default function CollectionPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between text-xs">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => Math.max(0, 1) && setIsMobileFilterOpen(true)}
+              onClick={() => setIsMobileFilterOpen(true)}
               className="lg:hidden flex items-center gap-2 font-bold text-neutral-800 border border-neutral-200 px-3 py-1.5 rounded-lg active:bg-neutral-50"
             >
               <span>🎛️</span> Filtrer et Trier
@@ -182,8 +243,6 @@ export default function CollectionPage() {
               <span>📊</span> <span className="text-neutral-800 font-bold">{filteredAndSortedProducts.length}</span> modèles trouvés
             </div>
           </div>
-
-          {/* FILTRE HORIZONTAL SUPPRIMÉ D'ICI - LE DESIGN NE BOUGE PAS */}
 
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-1 border-r border-neutral-200 pr-4 text-neutral-400">
@@ -264,9 +323,13 @@ export default function CollectionPage() {
             </div>
           </aside>
 
-          {/* LA GRILLE DE PRODUITS */}
+          {/* LA GRILLE DE PRODUITS CONTENANT LES AJOUTS DE L'ADMIN */}
           <div className="flex-grow">
-            {filteredAndSortedProducts.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-20 text-neutral-400 text-xs animate-pulse">
+                Chargement du catalogue en direct...
+              </div>
+            ) : filteredAndSortedProducts.length === 0 ? (
               <div className="bg-white rounded-2xl border border-neutral-200/60 p-16 text-center max-w-xl mx-auto my-10 space-y-4">
                 <div className="text-3xl">🔍</div>
                 <h3 className="text-base font-bold text-neutral-800">Aucun modèle ne correspond à vos filtres</h3>
@@ -281,10 +344,10 @@ export default function CollectionPage() {
                     
                     {/* Bouton Like Interactif */}
                     <button 
-                      onClick={() => toggleLike(product.id)}
+                      onClick={() => toggleLike(String(product.id))}
                       className="absolute top-2.5 right-2.5 z-20 bg-white/80 backdrop-blur-sm p-1.5 rounded-full shadow-sm hover:bg-white transition-all text-xs"
                     >
-                      {likedProducts.includes(product.id) ? "❤️" : "🤍"}
+                      {likedProducts.includes(String(product.id)) ? "❤️" : "🤍"}
                     </button>
 
                     {!product.inStock && (
@@ -293,7 +356,11 @@ export default function CollectionPage() {
                       </div>
                     )}
                     <div className="relative aspect-[4/5] bg-neutral-100 overflow-hidden">
-                      <Image src={product.image} alt={product.name} fill className="group-hover:scale-102 transition-transform duration-500 object-cover" />
+                      {product.image ? (
+                        <Image src={product.image} alt={product.name} fill className="group-hover:scale-102 transition-transform duration-500 object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-400">Pas d'image</div>
+                      )}
                       {(product.tag || product.badge) && (
                         <span className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-sm text-purple-700 text-[9px] font-bold px-2 py-0.5 rounded shadow-sm z-10 uppercase tracking-wide">{product.tag || product.badge}</span>
                       )}
@@ -393,15 +460,15 @@ export default function CollectionPage() {
             {premiumRecommendations.map((product) => (
               <div key={product.id} className="bg-white rounded-2xl p-2.5 border border-neutral-200/40 shadow-sm hover:shadow-md transition-all flex flex-col justify-between text-xs relative group">
                 <button 
-                  onClick={() => toggleLike(product.id)}
+                  onClick={() => toggleLike(String(product.id))}
                   className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-sm text-[10px]"
                 >
-                  {likedProducts.includes(product.id) ? "❤️" : "🤍"}
+                  {likedProducts.includes(String(product.id)) ? "❤️" : "🤍"}
                 </button>
                 
                 <div>
                   <div className="relative aspect-square rounded-xl bg-neutral-50 overflow-hidden mb-3">
-                    <Image src={product.image} alt={product.name} fill className="group-hover:scale-102 transition-transform duration-300 object-cover" />
+                    {product.image && <Image src={product.image} alt={product.name} fill className="group-hover:scale-102 transition-transform duration-300 object-cover" />}
                   </div>
                   <span className="text-[9px] text-purple-600 font-bold uppercase tracking-wider block mb-0.5">{product.category}</span>
                   <h4 className="font-semibold text-neutral-800 line-clamp-1 group-hover:text-purple-700 transition-colors mb-1">{product.name}</h4>

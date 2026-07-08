@@ -14,10 +14,43 @@ export default function NouvelArrivagePage() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // État de connexion Admin global
+  // Sécurité d'hydratation
+  const [mounted, setMounted] = useState(false);
+
+  // États pour l'authentification officielle Supabase
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // Dictionnaire de nettoyage et de fusion centralisé des doublons
+  const categoryCorrections: { [key: string]: string } = {
+    "gaine": "Gaines",
+    "gaines": "Gaines",
+    "soin et meditation": "Soin et méditation",
+    "soin et méditation": "Soin et méditation",
+    "soins et méditation": "Soin et méditation",
+    "meditation": "Soin et méditation",
+    "méditation": "Soin et méditation",
+    // Fusion explicite de l'Électroménager pour regrouper tout le contenu
+    "electromenager": "Électroménager",
+    "électroménager": "Électroménager",
+    "electroménager": "Électroménager",
+    "électromenager": "Électroménager"
+  };
 
   useEffect(() => {
+    setMounted(true);
+
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setIsAdminAuthenticated(true);
+      }
+    };
+    checkUser();
+
     const fetchDbProducts = async () => {
       try {
         const { data, error } = await (supabase as any).from("products").select("*");
@@ -36,18 +69,7 @@ export default function NouvelArrivagePage() {
   const localItems = Array.isArray(allProducts) ? allProducts : [];
   const fullListForStats = [...dbProducts, ...localItems];
 
-  // Dictionnaire de forçage pour fusionner et corriger précisément les doublons restants
-  const categoryCorrections: { [key: string]: string } = {
-    "gaine": "Gaines",
-    "gaines": "Gaines",
-    "soin et meditation": "Soin et méditation",
-    "soin et méditation": "Soin et méditation",
-    "soins et méditation": "Soin et méditation",
-    "meditation": "Soin et méditation",
-    "méditation": "Soin et méditation"
-  };
-
-  // FUSION, CORRECTION ET NETTOYAGE STRICT DES CATÉGORIES
+  // Génération de la liste unique des catégories nettoyées
   const categories = [
     "Tous",
     ...Array.from(
@@ -55,16 +77,10 @@ export default function NouvelArrivagePage() {
         fullListForStats
           .map((p) => {
             if (!p.category) return "";
-            
-            // Nettoyage de base (minuscule et sans espaces superflus)
             const normalizedLower = p.category.trim().toLowerCase();
-            
-            // 1. Vérification si la catégorie est dans notre liste de corrections spécifiques
             if (categoryCorrections[normalizedLower]) {
               return categoryCorrections[normalizedLower];
             }
-            
-            // 2. Correction générique par défaut (Première lettre en Majuscule)
             return normalizedLower.charAt(0).toUpperCase() + normalizedLower.slice(1);
           })
           .filter(Boolean)
@@ -86,23 +102,49 @@ export default function NouvelArrivagePage() {
   const specialRequestMessage = `Bonjour SYLITE, je regarde vos nouveaux arrivages mais je recherche un article spécifique qui n'est pas listé sur la page. Pouvez-vous m'aider ?`;
   const specialRequestUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(specialRequestMessage)}`;
 
-  const triggerAuth = () => {
+  const triggerAuth = async () => {
     if (isAdminAuthenticated) {
+      await supabase.auth.signOut();
       setIsAdminAuthenticated(false);
       alert("Mode Admin déconnecté.");
       return;
     }
-    const pwd = prompt("Entrez le mot de passe secret administrateur SyLite :");
-    if (pwd === "syliteadmin2026") {
+    setShowAuthModal(true);
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (error) throw error;
+
       setIsAdminAuthenticated(true);
+      setShowAuthModal(false);
+      setEmail("");
+      setPassword("");
       alert("Accès Admin accordé !");
-    } else if (pwd !== null) {
-      alert("Mot de passe incorrect.");
+    } catch (err: any) {
+      alert(`Erreur d'authentification : ${err.message || "Identifiants invalides."}`);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
+  const handleLogoutAdmin = async () => {
+    await supabase.auth.signOut();
+    setIsAdminAuthenticated(false);
+  };
+
+  if (!mounted) return null;
+
   return (
-    <div className="bg-neutral-50 min-h-screen">
+    <div className="bg-neutral-50 min-h-screen relative">
       
       {/* ================= BANNIÈRE HERO ================= */}
       <section className="relative bg-gradient-to-br from-neutral-950 via-neutral-900 to-purple-950 text-white py-24 tracking-wide overflow-hidden">
@@ -122,12 +164,12 @@ export default function NouvelArrivagePage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl z-0 pointer-events-none" />
       </section>
 
-      {/* ================= ZONE ADMINISTRATIVE ENTIÈREMENT SÉCURISÉE ================= */}
+      {/* ================= ZONE ADMINISTRATIVE SÉCURISÉE ================= */}
       {isAdminAuthenticated ? (
         <AdminPanel 
           onProductChange={() => setRefreshKey(prev => prev + 1)} 
           existingCategories={categories.filter(c => c !== "Tous")} 
-          onLogout={() => setIsAdminAuthenticated(false)}
+          onLogout={handleLogoutAdmin}
         />
       ) : (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 text-left">
@@ -140,7 +182,55 @@ export default function NouvelArrivagePage() {
         </div>
       )}
 
-      {/* ================= CONTEXTE LOGIQUE DE LA PAGE ================= */}
+      {/* ================= MODALE DE CONNEXION ADMIN ================= */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-neutral-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm border border-neutral-100 shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold text-neutral-900">🔑 Connexion SyLite Admin</h3>
+              <button 
+                onClick={() => setShowAuthModal(false)} 
+                className="text-xs font-bold text-neutral-400 hover:text-neutral-600"
+              >
+                Fermer X
+              </button>
+            </div>
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] text-neutral-500 font-bold uppercase mb-1">Adresse Email</label>
+                <input 
+                  type="email" 
+                  required
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  placeholder="admin@sylite.com" 
+                  className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" 
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-neutral-500 font-bold uppercase mb-1">Mot de passe</label>
+                <input 
+                  type="password" 
+                  required
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  placeholder="••••••••" 
+                  className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" 
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={authLoading}
+                className="w-full text-xs font-bold bg-purple-600 text-white py-2.5 rounded-xl hover:bg-purple-700 transition-all disabled:bg-neutral-300"
+              >
+                {authLoading ? "Connexion..." : "Se connecter"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= CONTEXTE LOGIQUE ================= */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-neutral-200 pb-6 gap-4">
           <div>
@@ -158,7 +248,7 @@ export default function NouvelArrivagePage() {
           </div>
         </div>
 
-        {/* ================= SECTION FILTRES ================= */}
+        {/* ================= FILTRES ================= */}
         <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none">
           {categories.map((cat) => (
             <button
@@ -224,7 +314,7 @@ export default function NouvelArrivagePage() {
             return (
               <div key={`limited-local-render-${product.id || index}-${index}`} className="bg-white border border-neutral-200/60 rounded-2xl p-4 flex items-center gap-4 hover:border-purple-200 transition-all">
                 <div className="relative w-20 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100">
-                  <img src={product.image || product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                  <Image src={product.image || product.image_url} alt={product.name} fill className="object-cover" />
                 </div>
                 <div className="flex-grow min-w-0">
                   <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block">{cleanCat}</span>
@@ -243,7 +333,7 @@ export default function NouvelArrivagePage() {
   );
 }
 
-// ================= LE PANNEAU ADMINISTRATEUR SÉCURISÉ =================
+// ================= COMPOSANT PANNEAU ADMIN =================
 function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProductChange: () => void, existingCategories: string[], onLogout: () => void }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -283,9 +373,7 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
         }
       ]).select();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       alert("Produit ajouté avec succès !");
       setName("");
@@ -295,8 +383,8 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
       setCategory("");
       onProductChange();
     } catch (err: any) {
-      console.error("Détail erreur Supabase :", err);
-      alert(`Erreur lors de l'ajout: ${err.message || "Vérifiez la configuration RLS de votre table Supabase."}`);
+      console.error(err);
+      alert(`Erreur lors de l'ajout: ${err.message || "Erreur de configuration."}`);
     } finally {
       setAdding(false);
     }
@@ -317,18 +405,18 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
         <form onSubmit={handleAddProduct} className="space-y-4">
           <div>
             <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Nom de l'article</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Ensemble Robe" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500" />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Ensemble Robe" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Prix (FCFA)</label>
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex: 15000" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500" />
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex: 15000" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" />
             </div>
             
             <div>
               <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Catégorie</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500">
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800">
                 <option value="">-- Choisir --</option>
                 {existingCategories.map(c => <option key={`select-cat-${c}`} value={c}>{c}</option>)}
                 <option value="new">+ Créer une nouvelle catégorie</option>
@@ -339,7 +427,7 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
           {category === "new" && (
             <div>
               <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Nom de la nouvelle catégorie</label>
-              <input type="text" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Ex: Robes" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-purple-300 rounded-xl focus:outline-none focus:border-purple-500" />
+              <input type="text" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Ex: Robes" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-purple-300 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" />
             </div>
           )}
 
@@ -368,7 +456,7 @@ function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProdu
   );
 }
 
-// ================= GRILLE CORRIGÉE SANS COLLISIONS D'ID =================
+// ================= COMPOSANT DE LA GRILLE DE PRODUITS =================
 function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, showAdminActions, categoryCorrections }: { filterCategory?: string, refreshKey: number, onProductDeleted: () => void, showAdminActions: boolean, categoryCorrections: { [key: string]: string } }) {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -378,10 +466,9 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
     const loadAllProducts = async () => {
       setLoading(true);
       try {
-        const { data: supabaseProducts, error } = await (supabase as any).from('products').select('*');
+        const { data: supabaseProducts } = await (supabase as any).from('products').select('*');
         const localItems = Array.isArray(allProducts) ? allProducts : [];
         
-        // 1. Éléments Supabase avec ID composite unique
         const dbItemsWithPrefix = (supabaseProducts || []).map((p, i) => {
           const norm = (p.category || "").trim().toLowerCase();
           const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
@@ -392,7 +479,6 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
           };
         });
 
-        // 2. Éléments locaux avec ID composite unique
         const localItemsWithPrefix = localItems.map((p, i) => {
           const norm = (p.category || "").trim().toLowerCase();
           const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
@@ -413,20 +499,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
         setProducts(combinedList);
       } catch (err) {
-        console.error("Erreur de grille :", err);
-        const fallback = Array.isArray(allProducts) ? allProducts : [];
-        
-        const normalizedFallback = fallback.map((p, i) => {
-          const norm = (p.category || "").trim().toLowerCase();
-          const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
-          return { 
-            ...p, 
-            displayCategory: corrected, 
-            safeId: `fallback-item-${p.id || i}-${i}` 
-          };
-        });
-        
-        setProducts(filterCategory ? normalizedFallback.filter((p: any) => p.displayCategory?.toLowerCase() === filterCategory.toLowerCase()) : normalizedFallback);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -466,6 +539,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
         const formattedPrice = String(rawPrice).includes("FCFA") ? rawPrice : `${rawPrice} FCFA`;
         const whatsappMessage = `Bonjour SYLITE, je souhaite commander l'article suivant :\n\n- *Produit :* ${product.name}\n- *Prix :* ${formattedPrice}\n\nEst-il disponible ?`;
         const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+        const optionsUrl = `/options?id=${product.id}`;
 
         return (
           <div key={`product-card-container-${product.safeId}`} className="bg-white rounded-2xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:border-purple-100 transition-all duration-300 group flex flex-col relative">
@@ -480,7 +554,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
             )}
 
             <div className="relative aspect-[4/5] bg-neutral-100 overflow-hidden">
-              <img src={product.image_url || product.image} alt={product.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" />
+              <Image src={product.image_url || product.image} alt={product.name} fill className="object-cover transform group-hover:scale-105 transition-transform duration-500" />
               <span className="absolute bottom-3 left-3 bg-neutral-950/80 backdrop-blur-md text-purple-400 text-[9px] font-bold px-2.5 py-1 rounded-md border border-purple-500/10 z-10 uppercase tracking-wider">
                 {product.displayCategory || product.category}
               </span>
@@ -492,11 +566,16 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
                 <h3 className="text-sm font-semibold text-neutral-800 line-clamp-2 mb-2 group-hover:text-purple-700 transition-colors">{product.name}</h3>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-neutral-50 flex flex-col gap-3">
-                <div className="flex flex-col">
+              <div className="mt-4 pt-3 border-t border-neutral-50 flex flex-col gap-2">
+                <div className="flex flex-col mb-1">
                   <span className="text-[9px] text-neutral-400 uppercase tracking-wider">Tarif</span>
                   <div className="text-base font-black text-neutral-900">{formattedPrice}</div>
                 </div>
+
+                {/* Bouton Options s'accordant au style minimaliste et aux couleurs de la carte */}
+                <a href={optionsUrl} className="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-all border border-neutral-200">
+                  Choisir Taille & Couleur ⚙️
+                </a>
                 
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition-all shadow-sm">
                   Commander via WhatsApp 💬
