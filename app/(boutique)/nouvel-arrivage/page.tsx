@@ -17,13 +17,6 @@ export default function NouvelArrivagePage() {
   // Sécurité d'hydratation
   const [mounted, setMounted] = useState(false);
 
-  // États pour l'authentification officielle Supabase
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-
   // Dictionnaire de nettoyage et de fusion centralisé des doublons
   const categoryCorrections: { [key: string]: string } = {
     "gaine": "Gaines",
@@ -33,7 +26,6 @@ export default function NouvelArrivagePage() {
     "soins et méditation": "Soin et méditation",
     "meditation": "Soin et méditation",
     "méditation": "Soin et méditation",
-    // Fusion explicite de l'Électroménager pour regrouper tout le contenu
     "electromenager": "Électroménager",
     "électroménager": "Électroménager",
     "electroménager": "Électroménager",
@@ -42,14 +34,6 @@ export default function NouvelArrivagePage() {
 
   useEffect(() => {
     setMounted(true);
-
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setIsAdminAuthenticated(true);
-      }
-    };
-    checkUser();
 
     const fetchDbProducts = async () => {
       try {
@@ -69,7 +53,6 @@ export default function NouvelArrivagePage() {
   const localItems = Array.isArray(allProducts) ? allProducts : [];
   const fullListForStats = [...dbProducts, ...localItems];
 
-  // Génération de la liste unique des catégories nettoyées
   const categories = [
     "Tous",
     ...Array.from(
@@ -102,46 +85,11 @@ export default function NouvelArrivagePage() {
   const specialRequestMessage = `Bonjour SYLITE, je regarde vos nouveaux arrivages mais je recherche un article spécifique qui n'est pas listé sur la page. Pouvez-vous m'aider ?`;
   const specialRequestUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(specialRequestMessage)}`;
 
-  const triggerAuth = async () => {
-    if (isAdminAuthenticated) {
-      await supabase.auth.signOut();
-      setIsAdminAuthenticated(false);
-      alert("Mode Admin déconnecté.");
-      return;
-    }
-    setShowAuthModal(true);
-  };
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
-      });
-
-      if (error) throw error;
-
-      setIsAdminAuthenticated(true);
-      setShowAuthModal(false);
-      setEmail("");
-      setPassword("");
-      alert("Accès Admin accordé !");
-    } catch (err: any) {
-      alert(`Erreur d'authentification : ${err.message || "Identifiants invalides."}`);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleLogoutAdmin = async () => {
-    await supabase.auth.signOut();
-    setIsAdminAuthenticated(false);
-  };
-
-  if (!mounted) return null;
+  // CORRECTION : On ne coupe pas le rendu ici, on laisse le cycle de vie Next.js s'exécuter 
+  // et on applique la condition de montage globale juste à l'affichage du JSX.
+  if (!mounted) {
+    return <div className="bg-neutral-50 min-h-screen text-center py-20 text-xs text-neutral-400">Initialisation de la boutique...</div>;
+  }
 
   return (
     <div className="bg-neutral-50 min-h-screen relative">
@@ -164,77 +112,11 @@ export default function NouvelArrivagePage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl z-0 pointer-events-none" />
       </section>
 
-      {/* ================= ZONE ADMINISTRATIVE SÉCURISÉE ================= */}
-      {isAdminAuthenticated ? (
-        <AdminPanel 
-          onProductChange={() => setRefreshKey(prev => prev + 1)} 
-          existingCategories={categories.filter(c => c !== "Tous")} 
-          onLogout={handleLogoutAdmin}
-        />
-      ) : (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 text-left">
-          <button 
-            onClick={triggerAuth} 
-            className="text-[10px] text-neutral-300 hover:text-neutral-400 bg-transparent transition-all border-none outline-none cursor-default"
-          >
-            .
-          </button>
-        </div>
-      )}
-
-      {/* ================= MODALE DE CONNEXION ADMIN ================= */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-neutral-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm border border-neutral-100 shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-neutral-900">🔑 Connexion SyLite Admin</h3>
-              <button 
-                onClick={() => setShowAuthModal(false)} 
-                className="text-xs font-bold text-neutral-400 hover:text-neutral-600"
-              >
-                Fermer X
-              </button>
-            </div>
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[10px] text-neutral-500 font-bold uppercase mb-1">Adresse Email</label>
-                <input 
-                  type="email" 
-                  required
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  placeholder="admin@sylite.com" 
-                  className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" 
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-neutral-500 font-bold uppercase mb-1">Mot de passe</label>
-                <input 
-                  type="password" 
-                  required
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  placeholder="••••••••" 
-                  className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" 
-                />
-              </div>
-              <button 
-                type="submit" 
-                disabled={authLoading}
-                className="w-full text-xs font-bold bg-purple-600 text-white py-2.5 rounded-xl hover:bg-purple-700 transition-all disabled:bg-neutral-300"
-              >
-                {authLoading ? "Connexion..." : "Se connecter"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* ================= CONTEXTE LOGIQUE ================= */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-neutral-200 pb-6 gap-4">
           <div>
-            <h2 onDoubleClick={triggerAuth} className="text-2xl font-serif tracking-wide text-neutral-900 font-bold cursor-pointer select-none">
+            <h2 className="text-2xl font-serif tracking-wide text-neutral-900 font-bold select-none">
               Tous nos articles ({loading ? "..." : displayCount})
             </h2>
             <p className="text-xs text-neutral-500 mt-1">
@@ -244,7 +126,7 @@ export default function NouvelArrivagePage() {
           
           <div className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5 self-start md:self-auto">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            Commande directe sur WhatsApp au +223 94 93 93 80
+            Commande directe sur WhatsApp
           </div>
         </div>
 
@@ -272,8 +154,9 @@ export default function NouvelArrivagePage() {
           filterCategory={selectedCategory === "Tous" ? undefined : selectedCategory} 
           refreshKey={refreshKey}
           onProductDeleted={() => setRefreshKey(prev => prev + 1)}
-          showAdminActions={isAdminAuthenticated}
+          showAdminActions={false}
           categoryCorrections={categoryCorrections}
+          whatsappNumber={WHATSAPP_NUMBER}
         />
       </main>
 
@@ -311,10 +194,14 @@ export default function NouvelArrivagePage() {
             const displayPrice = String(product.price).includes("FCFA") ? product.price : `${product.price} FCFA`;
             const rawCat = product.category || "";
             const cleanCat = categoryCorrections[rawCat.trim().toLowerCase()] || (rawCat.trim().charAt(0).toUpperCase() + rawCat.trim().slice(1).toLowerCase());
+            
+            // Sécurité image manquante pour éviter le crash de l'élément Image de Next.js
+            const finalImageSrc = product.image_url || product.image || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600";
+
             return (
               <div key={`limited-local-render-${product.id || index}-${index}`} className="bg-white border border-neutral-200/60 rounded-2xl p-4 flex items-center gap-4 hover:border-purple-200 transition-all">
                 <div className="relative w-20 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100">
-                  <Image src={product.image || product.image_url} alt={product.name} fill className="object-cover" />
+                  <Image src={finalImageSrc} alt={product.name} fill className="object-cover" />
                 </div>
                 <div className="flex-grow min-w-0">
                   <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block">{cleanCat}</span>
@@ -333,134 +220,10 @@ export default function NouvelArrivagePage() {
   );
 }
 
-// ================= COMPOSANT PANNEAU ADMIN =================
-function AdminPanel({ onProductChange, existingCategories, onLogout }: { onProductChange: () => void, existingCategories: string[], onLogout: () => void }) {
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [adding, setAdding] = useState(false);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !price || (!category && !newCategory)) {
-      alert("Veuillez remplir au moins le nom, le prix et la catégorie.");
-      return;
-    }
-
-    setAdding(true);
-    const finalCategory = category === "new" ? newCategory.trim() : category;
-
-    try {
-      const { data, error } = await (supabase as any).from("products").insert([
-        {
-          name,
-          price: parseFloat(price),
-          category: finalCategory,
-          image_url: imageUrl || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600",
-        }
-      ]).select();
-
-      if (error) throw error;
-
-      alert("Produit ajouté avec succès !");
-      setName("");
-      setPrice("");
-      setImageUrl("");
-      setNewCategory("");
-      setCategory("");
-      onProductChange();
-    } catch (err: any) {
-      console.error(err);
-      alert(`Erreur lors de l'ajout: ${err.message || "Erreur de configuration."}`);
-    } finally {
-      setAdding(false);
-    }
-  };
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-      <div className="p-6 bg-white border-2 border-purple-500/20 rounded-3xl shadow-xl max-w-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-            <span>🔐 Espace Privé :</span> Ajouter un nouveau produit
-          </h3>
-          <button onClick={onLogout} className="text-[10px] font-bold bg-neutral-200 text-neutral-700 px-3 py-1.5 rounded-xl hover:bg-neutral-300 transition-all">
-            Fermer X
-          </button>
-        </div>
-        
-        <form onSubmit={handleAddProduct} className="space-y-4">
-          <div>
-            <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Nom de l'article</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Ensemble Robe" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Prix (FCFA)</label>
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex: 15000" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" />
-            </div>
-            
-            <div>
-              <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Catégorie</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800">
-                <option value="">-- Choisir --</option>
-                {existingCategories.map(c => <option key={`select-cat-${c}`} value={c}>{c}</option>)}
-                <option value="new">+ Créer une nouvelle catégorie</option>
-              </select>
-            </div>
-          </div>
-
-          {category === "new" && (
-            <div>
-              <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Nom de la nouvelle catégorie</label>
-              <input type="text" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Ex: Robes" className="w-full text-xs px-3 py-2.5 bg-neutral-50 border border-purple-300 rounded-xl focus:outline-none focus:border-purple-500 text-neutral-800" />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-[11px] text-neutral-500 font-bold uppercase mb-1">Sélectionner l'image sur l'ordinateur</label>
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleFileChange} 
-              className="w-full text-xs px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
-            />
-            {imageUrl && (
-              <div className="mt-2 text-[10px] text-emerald-600 flex items-center gap-2">
-                <span>✓ Image chargée avec succès localement</span>
-                <div className="w-8 h-8 rounded bg-cover" style={{ backgroundImage: `url(${imageUrl})` }} />
-              </div>
-            )}
-          </div>
-
-          <button type="submit" disabled={adding} className="w-full text-xs font-bold bg-purple-600 text-white py-2.5 rounded-xl hover:bg-purple-700 transition-all disabled:bg-neutral-300">
-            {adding ? "Enregistrement en cours..." : "✅ Mettre le produit en ligne"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ================= COMPOSANT DE LA GRILLE DE PRODUITS =================
-function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, showAdminActions, categoryCorrections }: { filterCategory?: string, refreshKey: number, onProductDeleted: () => void, showAdminActions: boolean, categoryCorrections: { [key: string]: string } }) {
+function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, showAdminActions, categoryCorrections, whatsappNumber }: { filterCategory?: string, refreshKey: number, onProductDeleted: () => void, showAdminActions: boolean, categoryCorrections: { [key: string]: string }, whatsappNumber: string }) {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const WHATSAPP_NUMBER = "22394939380";
 
   useEffect(() => {
     const loadAllProducts = async () => {
@@ -475,7 +238,8 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
           return { 
             ...p, 
             displayCategory: corrected, 
-            safeId: `db-item-${p.id || i}-${i}` 
+            safeId: `db-item-${p.id || i}-${i}`,
+            originalId: p.id
           };
         });
 
@@ -485,7 +249,8 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
           return { 
             ...p, 
             displayCategory: corrected, 
-            safeId: `local-item-${p.id || i}-${i}` 
+            safeId: `local-item-${p.id || i}-${i}`,
+            originalId: p.id
           };
         });
 
@@ -538,8 +303,12 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
         const rawPrice = product.price;
         const formattedPrice = String(rawPrice).includes("FCFA") ? rawPrice : `${rawPrice} FCFA`;
         const whatsappMessage = `Bonjour SYLITE, je souhaite commander l'article suivant :\n\n- *Produit :* ${product.name}\n- *Prix :* ${formattedPrice}\n\nEst-il disponible ?`;
-        const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
-        const optionsUrl = `/options?id=${product.id}`;
+        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+        
+        const optionsUrl = `/admin?id=${product.originalId}`;
+        
+        // Sécurité image manquante ici aussi
+        const finalGridImage = product.image_url || product.image || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600";
 
         return (
           <div key={`product-card-container-${product.safeId}`} className="bg-white rounded-2xl overflow-hidden border border-neutral-100 shadow-sm hover:shadow-xl hover:border-purple-100 transition-all duration-300 group flex flex-col relative">
@@ -554,7 +323,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
             )}
 
             <div className="relative aspect-[4/5] bg-neutral-100 overflow-hidden">
-              <Image src={product.image_url || product.image} alt={product.name} fill className="object-cover transform group-hover:scale-105 transition-transform duration-500" />
+              <Image src={finalGridImage} alt={product.name} fill className="object-cover transform group-hover:scale-105 transition-transform duration-500" />
               <span className="absolute bottom-3 left-3 bg-neutral-950/80 backdrop-blur-md text-purple-400 text-[9px] font-bold px-2.5 py-1 rounded-md border border-purple-500/10 z-10 uppercase tracking-wider">
                 {product.displayCategory || product.category}
               </span>
@@ -572,9 +341,8 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
                   <div className="text-base font-black text-neutral-900">{formattedPrice}</div>
                 </div>
 
-                {/* Bouton Options s'accordant au style minimaliste et aux couleurs de la carte */}
                 <a href={optionsUrl} className="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-all border border-neutral-200">
-                  Choisir Taille & Couleur ⚙️
+                  options ⚙️
                 </a>
                 
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition-all shadow-sm">
