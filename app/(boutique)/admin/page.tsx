@@ -4,6 +4,26 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseclient";
 
+// Définition des interfaces pour un typage TypeScript propre
+interface Product {
+  id: string | number;
+  name: string;
+  price: number;
+  category: string;
+  image_url: string;
+}
+
+interface CustomerMessage {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  subject?: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export default function AdminDashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
@@ -11,8 +31,8 @@ export default function AdminDashboardPage() {
   const [password, setPassword] = useState("");
   const [activeTab, setActiveTab] = useState<"products" | "messages">("products");
 
-  // États pour les produits
-  const [products, setProducts] = useState<any[]>([]);
+  // États pour les produits typés
+  const [products, setProducts] = useState<Product[]>([]);
   const [prodName, setProdName] = useState("");
   const [prodPrice, setProdPrice] = useState("");
   const [prodCategory, setProdCategory] = useState("");
@@ -24,15 +44,13 @@ export default function AdminDashboardPage() {
   // Clé unique pour réinitialiser de force le champ d'upload HTML
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   
-  // États pour la modification
-  const [editingProductId, setEditingProductId] = useState<any | null>(null);
+  // État de modification typé
+  const [editingProductId, setEditingProductId] = useState<string | number | null>(null);
 
-  // États pour les messages
-  const [messages, setMessages] = useState<any[]>([]);
+  // États pour les messages typés
+  const [messages, setMessages] = useState<CustomerMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // Extraction dynamique des catégories uniques à partir des produits existants
-  // Vous pouvez ajouter des valeurs par défaut dans le tableau ci-dessous au cas où la bdd est vide
   const defaultCategories = ["Gaines", "Cosmétiques", "Accessoires"];
   const categories = Array.from(
     new Set([
@@ -54,14 +72,23 @@ export default function AdminDashboardPage() {
   }, []);
 
   const loadProducts = async () => {
-    const { data } = await (supabase as any).from("products").select("*").order("id", { ascending: false });
-    if (data) setProducts(data);
+    const { data, error } = await supabase.from("products").select("*").order("id", { ascending: false });
+    if (error) {
+      console.error("Erreur chargement produits:", error.message);
+      return;
+    }
+    if (data) setProducts(data as Product[]);
   };
 
   const loadMessages = async () => {
     setLoadingMessages(true);
-    const { data } = await (supabase as any).from("messages").select("*").order("created_at", { ascending: false });
-    if (data) setMessages(data);
+    const { data, error } = await supabase.from("messages").select("*").order("created_at", { ascending: false });
+    if (error) {
+      console.error("Erreur chargement messages:", error.message);
+      setLoadingMessages(false);
+      return;
+    }
+    if (data) setMessages(data as CustomerMessage[]);
     setLoadingMessages(false);
   };
 
@@ -98,37 +125,31 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Annuler et vider intégralement le formulaire (champs + image + input HTML)
   const cancelEdit = () => {
     setEditingProductId(null);
     setProdName("");
     setProdPrice("");
     setProdCategory("");
     setProdImageUrl("");
-    setFileInputKey(Date.now()); // Reset le champ de fichier graphiquement
+    setFileInputKey(Date.now());
   };
 
-  // Sauvegarde unifiée blindée contre le double-déclenchement
   const handleSaveProduct = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent) => {
     if (e) {
       e.preventDefault();
-      e.stopPropagation(); // Bloque toute propagation d'événement indigène
     }
 
-    // Validation de base
     if (!prodName.trim() || !prodPrice || !prodCategory.trim()) {
       alert("Veuillez remplir les champs obligatoires.");
       return;
     }
 
-    // VERROU DE SÉCURITÉ ULTRA STRICT : Si une requête est déjà en cours, on intercepte immédiatement
     if (isSubmitting) return; 
     setIsSubmitting(true);
 
     try {
       if (editingProductId) {
-        // --- MODE MODIFICATION ---
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("products")
           .update({
             name: prodName.trim(),
@@ -141,8 +162,7 @@ export default function AdminDashboardPage() {
         if (error) throw error;
         alert("Produit mis à jour avec succès !");
       } else {
-        // --- MODE CREATION (AJOUT INITIAL) ---
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("products")
           .insert([
             {
@@ -157,18 +177,16 @@ export default function AdminDashboardPage() {
         alert("Produit ajouté avec succès !");
       }
 
-      // Réinitialisation immédiate du formulaire AVANT de recharger la liste
       cancelEdit();
       await loadProducts();
     } catch (err: any) {
       alert(`Erreur lors de l'enregistrement : ${err.message}`);
     } finally {
-      // On ne libère le verrou qu'une fois tout le processus complètement achevé
       setIsSubmitting(false);
     }
   };
 
-  const startEdit = (product: any) => {
+  const startEdit = (product: Product) => {
     setEditingProductId(product.id);
     setProdName(product.name);
     setProdPrice(product.price.toString());
@@ -177,21 +195,33 @@ export default function AdminDashboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteProduct = async (id: any, name: string) => {
+  const handleDeleteProduct = async (id: string | number, name: string) => {
     if (!confirm(`Supprimer définitivement "${name}" ?`)) return;
-    await (supabase as any).from("products").delete().eq("id", id);
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) {
+      alert(`Erreur de suppression : ${error.message}`);
+      return;
+    }
     if (editingProductId === id) cancelEdit();
     loadProducts();
   };
 
   const toggleMessageStatus = async (id: string, currentStatus: boolean) => {
-    await (supabase as any).from("messages").update({ is_read: !currentStatus }).eq("id", id);
+    const { error } = await supabase.from("messages").update({ is_read: !currentStatus }).eq("id", id);
+    if (error) {
+      console.error("Erreur statut message:", error.message);
+      return;
+    }
     loadMessages();
   };
 
   const handleDeleteMessage = async (id: string) => {
     if (!confirm("Supprimer ce message ?")) return;
-    await (supabase as any).from("messages").delete().eq("id", id);
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+    if (error) {
+      alert(`Erreur de suppression : ${error.message}`);
+      return;
+    }
     loadMessages();
   };
 
@@ -221,7 +251,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="bg-neutral-50 min-h-screen">
-      {/* Navigation Header */}
       <nav className="bg-neutral-950 text-white px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-6">
           <h1 className="text-lg font-serif font-bold tracking-wider">SyLite <span className="text-purple-400 italic font-normal">Backoffice</span></h1>
@@ -234,11 +263,8 @@ export default function AdminDashboardPage() {
       </nav>
 
       <main className="max-w-7xl mx-auto p-6 lg:p-8">
-        {/* ONGLET PRODUITS */}
         {activeTab === "products" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            
-            {/* Formulaire sans balise de soumission native pour éviter tout envoi fantôme */}
             <div className={`bg-white border rounded-3xl p-6 shadow-sm transition-all duration-300 ${editingProductId ? 'border-amber-400 ring-1 ring-amber-100' : 'border-neutral-200'}`}>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-bold text-neutral-900">
@@ -283,14 +309,12 @@ export default function AdminDashboardPage() {
                   {prodImageUrl && <div className="mt-2 w-12 h-12 bg-cover rounded-lg border" style={{ backgroundImage: `url(${prodImageUrl})` }} />}
                 </div>
                 
-                {/* Bouton d'action sécurisé par événement onClick isolé */}
                 <button type="button" onClick={handleSaveProduct} disabled={isSubmitting} className={`w-full text-xs font-bold text-white py-2.5 rounded-xl transition-all disabled:bg-neutral-300 ${editingProductId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-purple-600 hover:bg-purple-700'}`}>
                   {isSubmitting ? "Enregistrement en cours..." : editingProductId ? "Mettre à jour le produit" : "Enregistrer et publier"}
                 </button>
               </div>
             </div>
 
-            {/* Liste de contrôle en ligne */}
             <div className="lg:col-span-2 bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm">
               <h3 className="text-sm font-bold text-neutral-900 mb-4">📦 Produits actuellement enregistrés sur Supabase ({products.length})</h3>
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-none">
@@ -298,7 +322,12 @@ export default function AdminDashboardPage() {
                   <div key={p.id} className={`flex items-center justify-between p-3 border rounded-2xl transition-all ${editingProductId === p.id ? 'border-amber-400 bg-amber-50/20' : 'border-neutral-100 hover:border-purple-100'}`}>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative w-10 h-12 rounded-lg bg-neutral-100 overflow-hidden flex-shrink-0">
-                        {p.image_url && <Image src={p.image_url} alt={p.name} fill className="object-cover" />}
+                        {p.image_url && !p.image_url.startsWith("data:") && (
+                          <Image src={p.image_url} alt={p.name} fill className="object-cover" />
+                        )}
+                        {p.image_url && p.image_url.startsWith("data:") && (
+                          <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${p.image_url})` }} />
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h4 className="text-xs font-bold text-neutral-800 truncate">{p.name}</h4>
@@ -320,7 +349,6 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* ONGLET MESSAGES */}
         {activeTab === "messages" && (
           <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-6">
