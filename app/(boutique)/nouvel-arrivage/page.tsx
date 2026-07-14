@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseclient";
-// @ts-ignore
-import { allProducts } from "@/app/data/products";
+import { subscribeToProductChanges } from "@/lib/product-sync";
 
 export default function NouvelArrivagePage() {
   const WHATSAPP_NUMBER = "22394939380";
@@ -37,7 +36,10 @@ export default function NouvelArrivagePage() {
 
     const fetchDbProducts = async () => {
       try {
-        const { data, error } = await (supabase as any).from("products").select("*");
+        const { data, error } = await (supabase as any)
+          .from("products")
+          .select("*")
+          .order("created_at", { ascending: false });
         if (!error && data) {
           setDbProducts(data);
         }
@@ -47,11 +49,11 @@ export default function NouvelArrivagePage() {
         setLoading(false);
       }
     };
-    fetchDbProducts();
+    void fetchDbProducts();
+    return subscribeToProductChanges(() => void fetchDbProducts());
   }, [refreshKey]);
 
-  const localItems = Array.isArray(allProducts) ? allProducts : [];
-  const fullListForStats = [...dbProducts, ...localItems];
+  const fullListForStats = dbProducts;
 
   const categories = [
     "Tous",
@@ -71,7 +73,7 @@ export default function NouvelArrivagePage() {
     )
   ];
 
-  const limitedStockProducts = localItems.slice(0, 3);
+  const limitedStockProducts = dbProducts.slice(0, 3);
 
   const displayCount = selectedCategory === "Tous" 
     ? fullListForStats.length 
@@ -229,8 +231,12 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
     const loadAllProducts = async () => {
       setLoading(true);
       try {
-        const { data: supabaseProducts } = await (supabase as any).from('products').select('*');
-        const localItems = Array.isArray(allProducts) ? allProducts : [];
+        const { data: supabaseProducts, error } = await (supabase as any)
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
         
         const dbItemsWithPrefix = (supabaseProducts || []).map((p, i) => {
           const norm = (p.category || "").trim().toLowerCase();
@@ -243,18 +249,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
           };
         });
 
-        const localItemsWithPrefix = localItems.map((p, i) => {
-          const norm = (p.category || "").trim().toLowerCase();
-          const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
-          return { 
-            ...p, 
-            displayCategory: corrected, 
-            safeId: `local-item-${p.id || i}-${i}`,
-            originalId: p.id
-          };
-        });
-
-        let combinedList = [...dbItemsWithPrefix, ...localItemsWithPrefix];
+        let combinedList = dbItemsWithPrefix;
 
         if (filterCategory) {
           combinedList = combinedList.filter(
@@ -270,7 +265,8 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
       }
     };
 
-    loadAllProducts();
+    void loadAllProducts();
+    return subscribeToProductChanges(() => void loadAllProducts());
   }, [filterCategory, refreshKey]);
 
   const handleDelete = async (productId: any, productName: string) => {
@@ -305,7 +301,9 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
         const whatsappMessage = `Bonjour SYLITE, je souhaite commander l'article suivant :\n\n- *Produit :* ${product.name}\n- *Prix :* ${formattedPrice}\n\nEst-il disponible ?`;
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
         
-        const optionsUrl = `/admin?id=${product.originalId}`;
+        const optionsUrl = isDbProduct
+          ? `/options-db?id=${product.originalId}`
+          : `/options?id=${product.originalId}`;
         
         // Sécurité image manquante ici aussi
         const finalGridImage = product.image_url || product.image || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600";

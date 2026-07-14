@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseclient";
+import { notifyProductsChanged } from "@/lib/product-sync";
 
 // Définition des interfaces pour un typage TypeScript propre
 interface Product {
@@ -166,6 +167,7 @@ export default function AdminDashboardPage() {
           .from("products")
           .insert([
             {
+              source_id: `admin-${crypto.randomUUID()}`,
               name: prodName.trim(),
               price: parseFloat(prodPrice),
               category: prodCategory.trim(),
@@ -179,6 +181,7 @@ export default function AdminDashboardPage() {
 
       cancelEdit();
       await loadProducts();
+      notifyProductsChanged();
     } catch (err: any) {
       alert(`Erreur lors de l'enregistrement : ${err.message}`);
     } finally {
@@ -203,7 +206,8 @@ export default function AdminDashboardPage() {
       return;
     }
     if (editingProductId === id) cancelEdit();
-    loadProducts();
+    await loadProducts();
+    notifyProductsChanged();
   };
 
   const toggleMessageStatus = async (id: string, currentStatus: boolean) => {

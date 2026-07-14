@@ -3,10 +3,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-// Importation du catalogue dynamique partagé
-import { allProducts } from '../../data/products';
 // Importation du client Supabase branché sur ton espace Admin
 import { supabase } from '@/lib/supabaseclient';
+import { subscribeToProductChanges } from '@/lib/product-sync';
 
 // Interface produit standardisée
 interface Product {
@@ -35,7 +34,7 @@ interface DbProduct {
   price?: number | string;
   tag?: string;
   badge?: string;
-  inStock?: boolean;
+  in_stock?: boolean;
 }
 
 export default function CollectionPage() {
@@ -75,24 +74,28 @@ export default function CollectionPage() {
   // =========================================================================
   // RÉCUPÉRATION DES PRODUITS DEPUIS SUPABASE
   // =========================================================================
-  useEffect(() => {
-    const fetchDbProducts = async () => {
-      try {
-        const { data, error } = await supabase.from("products").select("*");
-        if (!error && data) {
-          setDbProducts(data as DbProduct[]);
-        } else if (error) {
-          console.error("Erreur Supabase:", error.message);
-        }
-      } catch (err) {
-        console.error("Erreur de récupération de la collection Supabase :", err);
-      } finally {
-        setLoading(false);
+  const fetchDbProducts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        setDbProducts(data as DbProduct[]);
+      } else if (error) {
+        console.error("Erreur Supabase:", error.message);
       }
-    };
-
-    fetchDbProducts();
+    } catch (err) {
+      console.error("Erreur de récupération de la collection Supabase :", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void fetchDbProducts();
+    return subscribeToProductChanges(() => void fetchDbProducts());
+  }, [fetchDbProducts]);
 
   // Fonction de nettoyage des catégories stabilisée avec useCallback
   const cleanCategoryName = useCallback((cat: string): string => {
@@ -114,11 +117,9 @@ export default function CollectionPage() {
   }, []);
 
   // =========================================================================
-  // CATALOGUE LOGIQUE CENTRALISÉ ET NORMALISÉ (FUSION LOCAL + DB)
+  // CATALOGUE LOGIQUE CENTRALISÉ ET NORMALISÉ (SUPABASE)
   // =========================================================================
   const normalizedCatalog = useMemo<NormalizedProduct[]>(() => {
-    const localItems = Array.isArray(allProducts) ? allProducts : [];
-    
     const normalizedDb = dbProducts.map((p, idx) => {
       const priceRaw = p.price;
       const numericPrice = typeof priceRaw === 'string' 
@@ -140,35 +141,11 @@ export default function CollectionPage() {
         displayPrice: formattedPrice,
         tag: p.tag || p.badge || '',
         badge: p.badge || '',
-        inStock: p.inStock !== undefined ? p.inStock : true
+        inStock: p.in_stock !== undefined ? p.in_stock : true
       };
     });
 
-    const normalizedLocal = localItems.map((p: any, idx) => {
-      const numericPrice = typeof p.price === 'string' 
-        ? parseInt(p.price.replace(/[^0-9]/g, ''), 10) 
-        : (typeof p.price === 'number' ? p.price : 0);
-
-      const formattedPrice = typeof p.price === 'string' 
-        ? p.price 
-        : `${Number(p.price || 0).toLocaleString('fr-FR')} FCFA`;
-
-      return {
-        id: `local-${p.id || idx}`,
-        originalId: p.id || idx,
-        name: p.name || '',
-        category: cleanCategoryName(p.category || ''),
-        image: p.image || '',
-        price: p.price,
-        cleanPrice: numericPrice,
-        displayPrice: formattedPrice,
-        tag: p.tag || '',
-        badge: p.badge || '',
-        inStock: p.inStock !== undefined ? p.inStock : true
-      };
-    });
-
-    return [...normalizedDb, ...normalizedLocal];
+    return normalizedDb;
   }, [dbProducts, cleanCategoryName]);
 
   const categories = useMemo(() => {
