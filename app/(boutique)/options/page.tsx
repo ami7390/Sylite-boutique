@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
@@ -21,7 +21,7 @@ interface Product {
   sizes?: string[];
 }
 
-export default function OptionsPage() {
+function OptionsPageContent() {
   const searchParams = useSearchParams();
   const productIdFromUrl = searchParams.get("id");
 
@@ -279,4 +279,8 @@ L'article est-il bien disponible pour une livraison ?`;
       </div>
     </div>
   );
-} 
+}
+
+export default function OptionsPage() {
+  return <Suspense fallback={null}><OptionsPageContent /></Suspense>;
+}

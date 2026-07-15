@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -7,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Les variables Supabase sont absentes.");
 }
 
-export const supabase: any = createClient(
+export const supabase = createClient<Database>(
   supabaseUrl,
   supabaseAnonKey
 );

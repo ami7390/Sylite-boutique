@@ -9,8 +9,7 @@ export default function Home() {
   // =========================================================================
   const WHATSAPP_NUMBER = "22394939380";
   
-  // États pour les composants interactifs (FAQ et Guide des tailles)
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  // État pour le guide des tailles
   const [activeTabSize, setActiveTabSize] = useState<string>("gaines");
   
   // État du compte à rebours pour la Vente Flash
@@ -114,25 +113,6 @@ export default function Home() {
       category: "Soin et méditation", 
       badge: "Zen", 
       image: "/bain-de-pied-10000.jpg"
-    },
-  ];
-
-  const faqItems = [
-    { 
-      q: "Comment se déroule la commande et le paiement ?", 
-      a: "C'est ultra-simple ! Vous cliquez sur le bouton de l'article de votre choix, ce qui ouvre directement une conversation WhatsApp pré-remplie avec notre équipe. Nous validons ensemble votre taille/variante, puis vous payez à la livraison à Bamako ou via Orange Money / Moov Money." 
-    },
-    { 
-      q: "Quels sont les délais et tarifs de livraison ?", 
-      a: "Pour Bamako, la livraison est effectuée en général le jour même ou sous 24 heures maximum. Pour l'intérieur du Mali (Ségou, Sikasso, Kayes, Mopti etc.), nous expédions via les compagnies de transport partenaires sécurisées sous 48h." 
-    },
-    { 
-      q: "Les articles en stock sont-ils authentiques et fidèles aux photos ?", 
-      a: "Oui, absolument. Nous attachons un soin premium à la sélection de nos textiles, lingeries et diffuseurs. Les visuels correspondent exactement aux finitions réelles. Sur simple demande WhatsApp, nos conseillers peuvent d'ailleurs vous transmettre de courtes vidéos réelles des modèles en stock avant expédition." 
-    },
-    { 
-      q: "Puis-je modifier ma commande ou faire un échange ?", 
-      a: "Tant que le colis n'est pas expédié, vous pouvez modifier votre commande directement sur WhatsApp. Pour des raisons d'hygiène évidents, les articles de lingerie fine et gaines ne sont ni repris ni échangés une fois portés. Pour le prêt-à-porter, contactez notre support sous 24h après réception." 
     },
   ];
 

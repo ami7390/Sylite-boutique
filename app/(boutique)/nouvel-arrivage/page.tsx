@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseclient";
 import { subscribeToProductChanges } from "@/lib/product-sync";
@@ -17,7 +17,7 @@ export default function NouvelArrivagePage() {
   const [mounted, setMounted] = useState(false);
 
   // Dictionnaire de nettoyage et de fusion centralisé des doublons
-  const categoryCorrections: { [key: string]: string } = {
+  const categoryCorrections = useMemo<{ [key: string]: string }>(() => ({
     "gaine": "Gaines",
     "gaines": "Gaines",
     "soin et meditation": "Soin et méditation",
@@ -29,7 +29,7 @@ export default function NouvelArrivagePage() {
     "électroménager": "Électroménager",
     "electroménager": "Électroménager",
     "électromenager": "Électroménager"
-  };
+  }), []);
 
   useEffect(() => {
     setMounted(true);
@@ -238,7 +238,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
         if (error) throw error;
         
-        const dbItemsWithPrefix = (supabaseProducts || []).map((p, i) => {
+        const dbItemsWithPrefix = (supabaseProducts || []).map((p: any, i: number) => {
           const norm = (p.category || "").trim().toLowerCase();
           const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
           return { 
@@ -253,7 +253,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
         if (filterCategory) {
           combinedList = combinedList.filter(
-            (p) => p.displayCategory?.toLowerCase() === filterCategory.toLowerCase()
+            (p: any) => p.displayCategory?.toLowerCase() === filterCategory.toLowerCase()
           );
         }
 
@@ -267,7 +267,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
     void loadAllProducts();
     return subscribeToProductChanges(() => void loadAllProducts());
-  }, [filterCategory, refreshKey]);
+  }, [categoryCorrections, filterCategory, refreshKey]);
 
   const handleDelete = async (productId: any, productName: string) => {
     if (!confirm(`Voulez-vous vraiment supprimer définitivement "${productName}" du site ?`)) return;

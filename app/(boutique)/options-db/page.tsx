@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ interface DbProduct {
   inStock?: boolean;
 }
 
-export default function OptionsDbPage() {
+function OptionsDbPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const productId = searchParams.get('id');
@@ -45,7 +45,7 @@ export default function OptionsDbPage() {
         const { data, error } = await supabase
           .from("products")
           .select("*")
-          .eq("id", productId)
+          .eq("id", Number(productId))
           .single();
 
         if (!error && data) {
@@ -246,4 +246,8 @@ export default function OptionsDbPage() {
       </main>
     </div>
   );
+}
+
+export default function OptionsDbPage() {
+  return <Suspense fallback={null}><OptionsDbPageContent /></Suspense>;
 }

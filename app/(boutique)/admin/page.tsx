@@ -7,7 +7,7 @@ import { notifyProductsChanged } from "@/lib/product-sync";
 
 // Définition des interfaces pour un typage TypeScript propre
 interface Product {
-  id: string | number;
+  id: number;
   name: string;
   price: number;
   category: string;
@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   
   // État de modification typé
-  const [editingProductId, setEditingProductId] = useState<string | number | null>(null);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
 
   // États pour les messages typés
   const [messages, setMessages] = useState<CustomerMessage[]>([]);
@@ -198,7 +198,7 @@ export default function AdminDashboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteProduct = async (id: string | number, name: string) => {
+  const handleDeleteProduct = async (id: number, name: string) => {
     if (!confirm(`Supprimer définitivement "${name}" ?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) {

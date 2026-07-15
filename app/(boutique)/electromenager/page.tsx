@@ -34,7 +34,7 @@ export default function ElectromenagerPage() {
     );
   };
 
-  const applianceCatalog: ApplianceProduct[] = [
+  const applianceCatalog = useMemo<ApplianceProduct[]>(() => [
     { 
       id: 101, 
       name: "Robot Culinaire Chauffant Connecté Intelligent", 
@@ -42,7 +42,7 @@ export default function ElectromenagerPage() {
       formattedPrice: "245.000 FCFA", 
       category: "Cuisine", 
       tag: "Best-Seller", 
-      image: "/robot-cuisine.jpg", 
+      image: "/robot-cuisine.png", 
       inStock: true,
       specs: { power: "1500W", capacity: "4.5L", warranty: "2 ans" }
     },
@@ -53,7 +53,7 @@ export default function ElectromenagerPage() {
       formattedPrice: "85.000 FCFA", 
       category: "Cuisine", 
       badge: "Healthy", 
-      image: "/air-fryer.jpg", 
+      image: "/air-fryer.png", 
       inStock: true,
       specs: { power: "1800W", capacity: "6.2L", warranty: "1 an" }
     },
@@ -64,7 +64,7 @@ export default function ElectromenagerPage() {
       formattedPrice: "180.000 FCFA", 
       category: "Entretien", 
       tag: "Nouveau", 
-      image: "/aspirateur-robot.jpg", 
+      image: "/aspirateur.jpg", 
       inStock: true,
       specs: { power: "Automatique", capacity: "0.6L", warranty: "2 ans" }
     },
@@ -85,7 +85,7 @@ export default function ElectromenagerPage() {
       formattedPrice: "320.000 FCFA", 
       category: "Cuisine", 
       badge: "Luxe", 
-      image: "/machine-cafe.jpg", 
+      image: "/machine-cafe.png", 
       inStock: false,
       specs: { power: "1450W", capacity: "1.8L", warranty: "2 ans" }
     },
@@ -95,11 +95,11 @@ export default function ElectromenagerPage() {
       price: 65000, 
       formattedPrice: "65.000 FCFA", 
       category: "Entretien", 
-      image: "/centrale-vapeur.jpg", 
+      image: "/fer-repasser.png", 
       inStock: true,
       specs: { power: "2400W", capacity: "1.5L", warranty: "1 an" }
     },
-  ];
+  ], []);
 
   const subCategories = [
     { name: "Tous", icon: "🔌" },
@@ -119,14 +119,14 @@ export default function ElectromenagerPage() {
     if (sortBy === "price-asc") result.sort((a, b) => a.price - b.price);
     else if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
     return result;
-  }, [selectedCategory, priceFilter, stockFilter, sortBy]);
+  }, [applianceCatalog, selectedCategory, priceFilter, stockFilter, sortBy]);
 
   return (
     <div className="bg-neutral-50/60 min-h-screen text-xs selection:bg-purple-500 selection:text-white">
       
       <header className="relative bg-neutral-900 text-white py-20 px-4 text-center overflow-hidden">
         <div className="absolute inset-0 opacity-15 mix-blend-overlay">
-          <Image src="/electro-hero-bg.jpg" alt="Électroménager Moderne" fill className="object-cover" priority />
+          <Image src="/electro.jpg" alt="Électroménager Moderne" fill className="object-cover" priority />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/80 via-neutral-900/40 to-neutral-950" />
         
@@ -251,13 +251,13 @@ export default function ElectromenagerPage() {
           <div className="bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-sm grid grid-cols-2 gap-4">
             <div className="text-center p-2">
               <div className="relative aspect-square w-20 mx-auto">
-                <Image src="/robot-cuisine.jpg" alt="Robot Cuisine" fill className="object-contain" />
+                <Image src="/robot-cuisine.png" alt="Robot Cuisine" fill className="object-contain" />
               </div>
               <p className="font-bold mt-2">Robot Intelligent</p>
             </div>
             <div className="text-center p-2">
               <div className="relative aspect-square w-20 mx-auto">
-                <Image src="/air-fryer.jpg" alt="Air Fryer" fill className="object-contain" />
+                <Image src="/air-fryer.png" alt="Air Fryer" fill className="object-contain" />
               </div>
               <p className="font-bold mt-2">Air Fryer XXL</p>
             </div>
