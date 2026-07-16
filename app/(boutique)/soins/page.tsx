@@ -17,7 +17,7 @@ interface CareProduct {
   in_stock?: boolean | null;
 }
 
-const WHATSAPP_NUMBER = "22373904319";
+const WHATSAPP_NUMBER = "22371710941";
 
 function belongsToCare(category: string) {
   const normalized = category.trim().toLocaleLowerCase("fr");
