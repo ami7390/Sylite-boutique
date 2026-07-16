@@ -1,5 +1,7 @@
 "use client";
 
+import Link from 'next/link';
+
 export default function WishlistPage() {
   // Simulation d'articles mis en favoris
   const wishlistItems = [

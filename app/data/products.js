@@ -57,8 +57,7 @@ export const allProducts = [
     { 
       id: 53, 
       name: "Diffuseur d'Huiles Essentielles Mini", 
-      price:"7500",
-      category: "Bien-être", 
+       category: "Bien-être", 
       badge: "Discret", 
       image: "/humidificateur-7500.jpg",
       isNew: true
@@ -586,7 +585,7 @@ export const allProducts = [
       isNew: true
     },
      { 
-      id: 201, 
+      id: 146, 
       name: "Jupe plissée fleurie ", 
       price: "4.000 FCFA", 
       category: "jupe", 
@@ -1084,7 +1083,7 @@ export const allProducts = [
     {
       id: 11,
       name: "Robot Domestique Intuitif & Électroménager Connecté",
-      price: "120.000",
+      price: "Sur Devis",
       category: "Électroménager",
       badge: "Technologie",
       image: "/electro.jpg",

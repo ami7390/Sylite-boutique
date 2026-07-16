@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import Image from 'next/image'
 import { supabase } from '../lib/supabaseclient'
 
 export default function ImageUpload() {
@@ -36,11 +35,11 @@ export default function ImageUpload() {
       setImageUrl(publicUrl)
 
       // 3. Force le passage sans typage strict pour ignorer l'ancien schéma local
-      const { error: dbError } = await supabase
+      const { error: dbError } = await (supabase as any)
         .from('products')
         .insert({
           name: "Nouvel Article Chic",
-          price: 25000,
+          price: "25 000 F CFA",
           category: "Nouvel Arrivage",
           image_url: publicUrl
         })
@@ -51,9 +50,8 @@ export default function ImageUpload() {
 
       alert('Image et produit ajoutés avec succès à la base de données ! 🎉')
 
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Une erreur est survenue lors de l'envoi."
-      alert(message)
+    } catch (error: any) {
+      alert(error.message || "Une erreur est survenue lors de l'envoi.")
       console.error("Détails de l'erreur :", error)
     } finally {
       setUploading(false)
@@ -76,7 +74,7 @@ export default function ImageUpload() {
       {imageUrl && (
         <div className="mt-4 flex flex-col items-center">
           <p className="text-sm text-green-600 mb-2">Aperçu de l'image insérée :</p>
-          <Image src={imageUrl} alt="Uploaded preview" width={192} height={192} unoptimized className="w-48 h-48 object-cover rounded shadow" />
+          <img src={imageUrl} alt="Uploaded preview" className="w-48 h-48 object-cover rounded shadow" />
         </div>
       )}
     </div>

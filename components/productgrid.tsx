@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { supabase } from '@/lib/supabaseclient';
 
+// Utilisation de l'alias absolu pour cibler directement ton vrai fichier
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
 import { allProducts as productsData } from '@/app/data/products';
 
 interface Product {
@@ -11,8 +14,7 @@ interface Product {
   name: string;
   price: number | string;
   category: string;
-  image_url?: string | null;
-  image?: string;
+  image_url: string;
 }
 
 interface ProductGridProps {
@@ -75,11 +77,9 @@ export default function ProductGrid({ filterCategory }: ProductGridProps) {
         /* ICI : Modification de la key pour s'assurer qu'elle soit unique au monde, combinant ID, nom et index */
         <div key={`product-${product.id}-${product.name}-${index}`} className="bg-neutral-900/40 border border-neutral-800/80 rounded-2xl overflow-hidden group hover:border-purple-500/30 transition-all duration-300 flex flex-col justify-between">
           <div className="aspect-square relative overflow-hidden bg-neutral-950">
-            <Image 
-              src={product.image_url || product.image || "/logo.png"}
+            <img 
+              src={product.image_url || (product as any).image} 
               alt={product.name} 
-              fill
-              unoptimized
               className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" 
             />
             <span className="absolute top-3 left-3 bg-purple-900/80 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-purple-500/30 backdrop-blur-sm">

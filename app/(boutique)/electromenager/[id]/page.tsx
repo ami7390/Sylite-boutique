@@ -42,7 +42,7 @@ export default function FicheProduitPage() {
 
   const productId = Number(params.id);
 
-  const applianceCatalog = useMemo<DetailedApplianceProduct[]>(() => [
+  const applianceCatalog: DetailedApplianceProduct[] = [
     { 
       id: 101, 
       name: "Robot Culinaire Chauffant Connecté Intelligent", 
@@ -50,7 +50,7 @@ export default function FicheProduitPage() {
       formattedPrice: "245.000 FCFA", 
       category: "Cuisine", 
       tag: "Best-Seller", 
-      image: "/robot-cuisine.png", 
+      image: "/robot-cuisine.jpg", 
       inStock: true,
       shortDescription: "Le compagnon ultime pour automatiser vos repas quotidiens avec plus de 200 recettes guidées pas-à-pas.",
       longDescription: "Redéfinissez votre façon de cuisiner avec ce robot culinaire connecté de haute technologie. Équipé d'un écran tactile intuitif et d'une balance intégrée ultra-précise, il coupe, mixe, pétrit et cuit vos aliments de manière autonome. Sa connectivité Wi-Fi vous permet de synchroniser de nouvelles recettes chaque semaine et de contrôler la cuisson directement depuis votre smartphone.",
@@ -70,7 +70,7 @@ export default function FicheProduitPage() {
       formattedPrice: "85.000 FCFA", 
       category: "Cuisine", 
       badge: "Healthy", 
-      image: "/air-fryer.png", 
+      image: "/air-fryer.jpg", 
       inStock: true,
       shortDescription: "Savourez des fritures croustillantes et saines avec jusqu'à 90% de matières grasses en moins.",
       longDescription: "Grâce à sa technologie de circulation d'air chaud pulsé à 360°, cet Air Fryer XXL assure une cuisson rapide et uniforme de toutes vos préparations. Son interface numérique propose 8 programmes prédéfinis (frites, poulet, poissons, gâteaux) pour vous simplifier la vie. Sa cuve XL est idéale pour régaler toute la famille en un seul passage.",
@@ -90,7 +90,7 @@ export default function FicheProduitPage() {
       formattedPrice: "180.000 FCFA", 
       category: "Entretien", 
       tag: "Nouveau", 
-      image: "/aspirateur.jpg", 
+      image: "/aspirateur-robot.jpg", 
       inStock: true,
       shortDescription: "Aspiration puissante et lavage intelligent des sols en totale autonomie.",
       longDescription: "Équipé d'un système de navigation laser LiDAR de dernière génération, cet aspirateur robot cartographie votre maison au millimètre près pour un nettoyage méthodique sans aucun oubli. Il détecte automatiquement les tapis pour augmenter sa puissance d'aspiration et combine un balayage mécanique à une serpillère vibrante pour éliminer les taches les plus tenaces.",
@@ -129,7 +129,7 @@ export default function FicheProduitPage() {
       formattedPrice: "320.000 FCFA", 
       category: "Cuisine", 
       badge: "Luxe", 
-      image: "/machine-cafe.png", 
+      image: "/machine-cafe.jpg", 
       inStock: false,
       shortDescription: "L'arôme authentique d'un café fraîchement moulu par un barista, à la maison.",
       longDescription: "Destinée aux véritables amateurs de café, cette machine intègre un broyeur en acier conique avec 13 réglages de mouture. Son système de moussage automatique prépare des cappuccinos onctueux d'une simple touche. Via l'application, configurez et enregistrez vos profils de boissons personnalisés (intensité, température, volume de lait).",
@@ -148,7 +148,7 @@ export default function FicheProduitPage() {
       price: 65000, 
       formattedPrice: "65.000 FCFA", 
       category: "Entretien", 
-      image: "/fer-repasser.png", 
+      image: "/centrale-vapeur.jpg", 
       inStock: true,
       shortDescription: "Un repassage professionnel ultra-rapide grâce à la puissance de la vapeur haute pression.",
       longDescription: "Gagnez un temps précieux sur vos séances de repassage. Cette centrale vapeur délivre un débit continu surpuissant capable de traverser les tissus les plus épais pour éliminer les faux plis en un seul geste. Sa semelle technologique glisse sans aucun effort et s'ajuste automatiquement à la température idéale pour chaque textile.",
@@ -161,11 +161,11 @@ export default function FicheProduitPage() {
         features: ["Effet pressing puissant", "Semelle anti-rayures", "Système de verrouillage sécurisé", "Collecteur de tartre express"]
       }
     },
-  ], []);
+  ];
 
   const product = useMemo(() => {
     return applianceCatalog.find(p => p.id === productId);
-  }, [applianceCatalog, productId]);
+  }, [productId]);
 
   if (!product) {
     return (

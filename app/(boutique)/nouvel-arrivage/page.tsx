@@ -1,15 +1,43 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseclient";
 import { subscribeToProductChanges } from "@/lib/product-sync";
+
+interface ProductRow {
+  id: number | string;
+  name: string;
+  price: number | string;
+  category: string;
+  image_url?: string | null;
+  image?: string | null;
+  badge?: string | null;
+  tag?: string | null;
+  in_stock?: boolean | null;
+  created_at?: string | null;
+}
+
+interface DisplayProduct extends ProductRow {
+  displayCategory: string;
+  safeId: string;
+  originalId: number | string;
+}
+
+interface ProductGridProps {
+  filterCategory?: string;
+  refreshKey: number;
+  onProductDeleted: () => void;
+  showAdminActions: boolean;
+  categoryCorrections: Record<string, string>;
+  whatsappNumber: string;
+}
 
 export default function NouvelArrivagePage() {
   const WHATSAPP_NUMBER = "22394939380";
   
   const [selectedCategory, setSelectedCategory] = useState("Tous");
-  const [dbProducts, setDbProducts] = useState<any[]>([]);
+  const [dbProducts, setDbProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -17,7 +45,7 @@ export default function NouvelArrivagePage() {
   const [mounted, setMounted] = useState(false);
 
   // Dictionnaire de nettoyage et de fusion centralisé des doublons
-  const categoryCorrections = useMemo<{ [key: string]: string }>(() => ({
+  const categoryCorrections: { [key: string]: string } = {
     "gaine": "Gaines",
     "gaines": "Gaines",
     "soin et meditation": "Soin et méditation",
@@ -29,7 +57,7 @@ export default function NouvelArrivagePage() {
     "électroménager": "Électroménager",
     "electroménager": "Électroménager",
     "électromenager": "Électroménager"
-  }), []);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -41,7 +69,7 @@ export default function NouvelArrivagePage() {
           .select("*")
           .order("created_at", { ascending: false });
         if (!error && data) {
-          setDbProducts(data);
+          setDbProducts(data as ProductRow[]);
         }
       } catch (err) {
         console.error("Erreur de synchro header :", err);
@@ -192,7 +220,7 @@ export default function NouvelArrivagePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {limitedStockProducts.map((product: any, index: number) => {
+          {limitedStockProducts.map((product, index) => {
             const displayPrice = String(product.price).includes("FCFA") ? product.price : `${product.price} FCFA`;
             const rawCat = product.category || "";
             const cleanCat = categoryCorrections[rawCat.trim().toLowerCase()] || (rawCat.trim().charAt(0).toUpperCase() + rawCat.trim().slice(1).toLowerCase());
@@ -223,8 +251,8 @@ export default function NouvelArrivagePage() {
 }
 
 // ================= COMPOSANT DE LA GRILLE DE PRODUITS =================
-function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, showAdminActions, categoryCorrections, whatsappNumber }: { filterCategory?: string, refreshKey: number, onProductDeleted: () => void, showAdminActions: boolean, categoryCorrections: { [key: string]: string }, whatsappNumber: string }) {
-  const [products, setProducts] = useState<any[]>([]);
+function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, showAdminActions, categoryCorrections, whatsappNumber }: ProductGridProps) {
+  const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -238,7 +266,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
         if (error) throw error;
         
-        const dbItemsWithPrefix = (supabaseProducts || []).map((p: any, i: number) => {
+        const dbItemsWithPrefix: DisplayProduct[] = ((supabaseProducts || []) as ProductRow[]).map((p, i) => {
           const norm = (p.category || "").trim().toLowerCase();
           const corrected = categoryCorrections[norm] || (norm.charAt(0).toUpperCase() + norm.slice(1));
           return { 
@@ -253,7 +281,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
         if (filterCategory) {
           combinedList = combinedList.filter(
-            (p: any) => p.displayCategory?.toLowerCase() === filterCategory.toLowerCase()
+            (p) => p.displayCategory?.toLowerCase() === filterCategory.toLowerCase()
           );
         }
 
@@ -267,9 +295,9 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
 
     void loadAllProducts();
     return subscribeToProductChanges(() => void loadAllProducts());
-  }, [categoryCorrections, filterCategory, refreshKey]);
+  }, [filterCategory, refreshKey]);
 
-  const handleDelete = async (productId: any, productName: string) => {
+  const handleDelete = async (productId: number | string, productName: string) => {
     if (!confirm(`Voulez-vous vraiment supprimer définitivement "${productName}" du site ?`)) return;
 
     try {
@@ -301,9 +329,7 @@ function ProductGridWithProps({ filterCategory, refreshKey, onProductDeleted, sh
         const whatsappMessage = `Bonjour SYLITE, je souhaite commander l'article suivant :\n\n- *Produit :* ${product.name}\n- *Prix :* ${formattedPrice}\n\nEst-il disponible ?`;
         const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
         
-        const optionsUrl = isDbProduct
-          ? `/options-db?id=${product.originalId}`
-          : `/options?id=${product.originalId}`;
+        const optionsUrl = `/options?id=${product.originalId}`;
         
         // Sécurité image manquante ici aussi
         const finalGridImage = product.image_url || product.image || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600";
